@@ -41,11 +41,7 @@ int main() {
                 break;
 
             case Command::ECHO:
-                // join all args and print
-                for (const string& arg : parsed.args) {
-                    cout << arg << " ";
-                }
-                cout << "\n";
+                cout<<input.substr(parsed.command.size() + 1)<<endl;
                 break;
 
             case Command::UNKNOWN:

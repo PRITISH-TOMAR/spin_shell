@@ -21,9 +21,9 @@ ParsedInput parseInput(const string& input) {
     // 3. Rest are either flags or args
     for (size_t i = 1; i < tokens.size(); i++) {
         if (tokens[i][0] == '-') {
-            result.flags.push_back(tokens[i]);  // starts with - → flag
+            result.flags.push_back(tokens[i]);  // starts with - flag
         } else {
-            result.args.push_back(tokens[i]);   // otherwise → arg
+            result.args.push_back(tokens[i]);   // otherwise  arg
         }
     }
 
