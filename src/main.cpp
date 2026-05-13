@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include "./commands/command.hpp"
-#include "./parser/parser.hpp"
+#include "./utils/parser/parser.hpp"
 
 using namespace std;
 
