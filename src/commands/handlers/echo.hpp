@@ -4,4 +4,4 @@
 
 using namespace std;
 
-void handleEcho(const vector<string>& args);
+void handleEcho(const string command);

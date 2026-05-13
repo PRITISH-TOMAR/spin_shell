@@ -1,9 +1,7 @@
 #include "echo.hpp"
 #include <iostream>
 
-void handleEcho(const vector<string>& args) {
-    for (const string& arg : args) {
-        cout << arg << " ";
-    }
+void handleEcho(const string command) {
+        cout << command.substr(5) << "\n";
     cout << "\n";
 }
