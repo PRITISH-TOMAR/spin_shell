@@ -18,7 +18,10 @@ int main() {
     while (true) {
         cout << "$ ";
 
-        if (!getline(cin, input)) break;
+        if (!getline(cin, input)) {
+            cout << "EOF \n";
+            break;
+        };
         if (input.empty()) continue;
 
         ParsedInput parsed = parseInput(input);
@@ -31,7 +34,7 @@ int main() {
             case Command::EXIT:  return 0;
             case Command::HELP:  handleHelp();               break;
             case Command::CLEAR: handleClear();              break;
-            case Command::ECHO:  handleEcho(parsed.args);    break;
+            case Command::ECHO:  handleEcho(input);    break;
             case Command::TYPE:  handleType(parsed.args);    break;
             case Command::UNKNOWN:
                 cout << parsed.command << ": command not found\n";
