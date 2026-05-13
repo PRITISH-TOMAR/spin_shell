@@ -1,7 +1,11 @@
 #include <iostream>
 #include <string>
-#include "./commands/command.hpp"
-#include "./utils/parser/parser.hpp"
+#include "commands/commands.hpp"
+#include "utils/parser/parser.hpp"
+#include "commands/handlers/echo.hpp"
+#include "commands/handlers/help.hpp"
+#include "commands/handlers/clear.hpp"
+#include "commands/handlers/type.hpp"
 
 using namespace std;
 
@@ -17,33 +21,18 @@ int main() {
         if (!getline(cin, input)) break;
         if (input.empty()) continue;
 
-        // 1. Parse the input
         ParsedInput parsed = parseInput(input);
 
-        // 2. Look up command
         Command cmd = Command::UNKNOWN;
         auto it = commandMap.find(parsed.command);
-        if (it != commandMap.end()) {
-            cmd = it->second;
-        }
+        if (it != commandMap.end()) cmd = it->second;
 
-        // 3. Switch on command
         switch (cmd) {
-            case Command::EXIT:
-                return 0;
-
-            case Command::HELP:
-                cout << "Available commands: exit, help, clear, echo\n";
-                break;
-
-            case Command::CLEAR:
-                system("clear");
-                break;
-
-            case Command::ECHO:
-                cout<<input.substr(parsed.command.size() + 1)<<endl;
-                break;
-
+            case Command::EXIT:  return 0;
+            case Command::HELP:  handleHelp();               break;
+            case Command::CLEAR: handleClear();              break;
+            case Command::ECHO:  handleEcho(parsed.args);    break;
+            case Command::TYPE:  handleType(parsed.args);    break;
             case Command::UNKNOWN:
                 cout << parsed.command << ": command not found\n";
                 break;

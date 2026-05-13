@@ -1,3 +1,6 @@
-#pragma once
+#include "clear.hpp"
+#include <cstdlib>
 
-void handleClear();
+void handleClear() {
+    system("clear");
+}
