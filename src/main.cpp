@@ -1,32 +1,56 @@
 #include <iostream>
 #include <string>
+#include "./commands/command.hpp"
+#include "./parser/parser.hpp"
 
 using namespace std;
 
 int main() {
-    // Flush the output buffer after each output operation
     cout << unitbuf;
     cerr << unitbuf;
 
     string input;
-    
-    // The REPL (Read-Eval-Print Loop)
+
     while (true) {
         cout << "$ ";
-        
-        // 1. Read the input
-        if (!getline(cin, input)) {
-            break; // Exit if EOF (e.g., Ctrl+D) is reached
+
+        if (!getline(cin, input)) break;
+        if (input.empty()) continue;
+
+        // 1. Parse the input
+        ParsedInput parsed = parseInput(input);
+
+        // 2. Look up command
+        Command cmd = Command::UNKNOWN;
+        auto it = commandMap.find(parsed.command);
+        if (it != commandMap.end()) {
+            cmd = it->second;
         }
 
-        // 2. Handle the "exit 0" command
-        if (input == "exit 0") {
-            return 0;
-        }
+        // 3. Switch on command
+        switch (cmd) {
+            case Command::EXIT:
+                return 0;
 
-        // 3. Handle unknown commands
-        if (!input.empty()) {
-            cout << input << ": command not found\n";
+            case Command::HELP:
+                cout << "Available commands: exit, help, clear, echo\n";
+                break;
+
+            case Command::CLEAR:
+                system("clear");
+                break;
+
+            case Command::ECHO:
+                // join all args and print
+                for (const string& arg : parsed.args) {
+                    cout << arg << " ";
+                }
+                cout << "\n";
+                break;
+
+            case Command::UNKNOWN:
+                cout << parsed.command << ": command not found\n";
+                break;
         }
     }
 }
