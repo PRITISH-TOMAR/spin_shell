@@ -23,14 +23,30 @@ static string findInPath(const string &command)
     stringstream ss(pathEnv);
     string dir;
 
-    // path string -> chunks dir -> dellimeter ':'
-    while (getline(ss, dir, ':'))
+    // Handle Windows vs Linux path separators
+#ifdef _WIN32
+    char delimiter = ';';
+#else
+    char delimiter = ':';
+#endif
+
+    // path string -> chunks dir -> dellimeter
+    while (getline(ss, dir, delimiter))
     {
         fs::path full = fs::path(dir) / command;
         if (fs::is_regular_file(full))
         {
             return full.string();
         }
+
+#ifdef _WIN32
+        // On Windows, executables often have a .exe extension
+        fs::path fullExe = fs::path(dir) / (command + ".exe");
+        if (fs::is_regular_file(fullExe))
+        {
+            return fullExe.string();
+        }
+#endif
     }
 
     return "";
