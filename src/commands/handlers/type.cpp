@@ -15,7 +15,7 @@ static bool isBuiltin(const string &name)
 static string findInPath(const string &command)
 {
 
-    // get $PATH value
+    // get $PATH 
     const char *pathEnv = getenv("PATH");
     if (!pathEnv)
         return "";
