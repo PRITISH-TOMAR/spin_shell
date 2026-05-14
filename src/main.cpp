@@ -6,7 +6,7 @@
 #include "commands/handlers/help.hpp"
 #include "commands/handlers/clear.hpp"
 #include "commands/handlers/type.hpp"
-
+#include "utils/executors/executor.hpp"
 using namespace std;
 
 int main() {
@@ -37,7 +37,7 @@ int main() {
             case Command::ECHO:  handleEcho(input);    break;
             case Command::TYPE:  handleType(parsed.args);    break;
             case Command::UNKNOWN:
-                cout << parsed.command << ": command not found\n";
+                executeExternalCommand(parsed.command, parsed.rawArgs);
                 break;
         }
     }

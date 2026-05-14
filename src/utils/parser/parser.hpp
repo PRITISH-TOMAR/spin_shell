@@ -9,6 +9,7 @@ struct ParsedInput {
     string         command;   // "echo", "exit", "ls" etc
     vector<string> args;      // ["hello", "world"]
     vector<string> flags;     // ["-l", "-a", "--help"]
+    vector<string> rawArgs;
 };
 
 // Main parser function
