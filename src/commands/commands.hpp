@@ -1,22 +1,35 @@
 #pragma once
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 
 using namespace std;
 
-// Enum for all commands
 enum class Command {
+    // ── Builtins ──────────────────
     EXIT,
     HELP,
-    CLEAR,
-    ECHO,
     TYPE,
+    HISTORY,
+
+    // ── Builtins (affect shell state) ──
+    CD,
+    PWD,
+    EXPORT,
+
+    // ── Tools (unix independent) ───
+    LS,
+    CAT,
+    ECHO,
+    GREP,
+    MKDIR,
+    RM,
+    CP,
+    MV,
+    TOUCH,
+    CLEAR,
+
     UNKNOWN
 };
 
-
 extern unordered_map<string, Command> commandMap;
-
-
 extern unordered_map<Command, string> commandNames;
