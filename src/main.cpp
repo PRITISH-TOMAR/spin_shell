@@ -2,10 +2,6 @@
 #include <string>
 #include "commands/commands.hpp"
 #include "utils/parser/parser.hpp"
-#include "commands/handlers/echo.hpp"
-#include "commands/handlers/help.hpp"
-#include "commands/handlers/clear.hpp"
-#include "commands/handlers/type.hpp"
 #include "utils/executors/executor.hpp"
 using namespace std;
 
