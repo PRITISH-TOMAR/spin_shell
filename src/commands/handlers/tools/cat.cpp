@@ -53,7 +53,7 @@ int handleCat(const ParsedInput& parsed, ShellState &state){
     if(parsed.rawArgs.empty() || parsed.files.empty()){
         cerr << "cat: missing file operand\n";
         cerr << "Usage: cat [OPTION]... [FILE]...\n";
-        return state.setStateToStatusCode(1);
+        return state.recordCommandExitCode(1);
     }
 
     bool numberAllLines = hasFlag(parsed, 'n', "number");
@@ -69,5 +69,5 @@ int handleCat(const ParsedInput& parsed, ShellState &state){
             exitCode = 1;
     }
 
-    return state.setStateToStatusCode(exitCode);
+    return state.recordCommandExitCode(exitCode);
 }

@@ -6,4 +6,4 @@
 using namespace std;
 
 // returns true = skip to next iteration, false = proceed to dispatch
-bool preprocessInput(string &input, ShellState &state, ParsedInput &out);
+bool prepareInputForDispatch(string &input, ShellState &state, ParsedInput &out);

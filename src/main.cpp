@@ -24,7 +24,7 @@ int main() {
         if (input.empty()) continue;
 
         ParsedInput parsed;
-        if (preprocessInput(input, state, parsed)) continue;
+        if (prepareInputForDispatch(input, state, parsed)) continue;
 
         Command cmd = Command::UNKNOWN;
         auto it = commandMap.find(parsed.command);

@@ -15,19 +15,19 @@ struct ShellState
 
     ShellState() : lastExitCode(0) {}
 
-    int setStateToStatusCode(int code)
+    int recordCommandExitCode(int code)
     {
         lastExitCode = code;
         return code;
     }
 
-    void printExitStatus() const
+    void displayLastCommandExitCode() const
     {
         cout << lastExitCode << "\n";
     }
 
     // looks up a variable: shell vars take priority over env vars
-    string findVar(const string &name) const
+    string lookupVariableValue(const string &name) const
     {
         auto it = variables.find(name);
         if (it != variables.end())
@@ -38,7 +38,7 @@ struct ShellState
     }
 
     // expands $? and $var in-place before parsing
-    void expandInput(string &input) const
+    void expandShellVariablesInPlace(string &input) const
     {
         size_t pos = 0;
         while ((pos = input.find('$', pos)) != string::npos)
@@ -60,14 +60,14 @@ struct ShellState
             string varName = input.substr(pos + 1, end - pos - 1);
             if (varName.empty()) { pos++; continue; }
 
-            string value = findVar(varName);
+            string value = lookupVariableValue(varName);
             input.replace(pos, end - pos, value);
             pos += value.size();
         }
     }
 
     // returns true if input was a var assignment (x=value), stores it
-    bool tryAssign(const string &command)
+    bool parseAndStoreVariableAssignment(const string &command)
     {
         size_t eq = command.find('=');
         if (eq == string::npos || eq == 0) return false;
