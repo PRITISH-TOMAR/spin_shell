@@ -1,9 +1,9 @@
 #include <iostream>
 #include <string>
 #include "commands/commands.hpp"
-#include "utils/parser/parser.hpp"
 #include "utils/executors/executor.hpp"
 #include "utils/shell_state/shell_state.hpp"
+#include "utils/handlers/input_handler.hpp"
 #include "src/commands/handlers/tools/cat.hpp"
 using namespace std;
 
@@ -20,14 +20,11 @@ int main() {
         if (!getline(cin, input)) {
             cout << "EOF \n";
             break;
-        };
+        }
         if (input.empty()) continue;
 
-        if (input == "$?") { state.printExitStatus(); continue; }
-
-        state.expandStatusCode(input);
-
-        ParsedInput parsed = parseInput(input);
+        ParsedInput parsed;
+        if (preprocessInput(input, state, parsed)) continue;
 
         Command cmd = Command::UNKNOWN;
         auto it = commandMap.find(parsed.command);
