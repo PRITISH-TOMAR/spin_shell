@@ -3,6 +3,7 @@
 #include "commands/commands.hpp"
 #include "utils/parser/parser.hpp"
 #include "utils/executors/executor.hpp"
+#include "src/commands/handlers/tools/cat.hpp"
 using namespace std;
 
 int main() {
@@ -27,14 +28,12 @@ int main() {
         if (it != commandMap.end()) cmd = it->second;
 
         switch (cmd) {
-            case Command::EXIT:  return 0;
-            case Command::HELP:  handleHelp();               break;
-            case Command::CLEAR: handleClear();              break;
-            case Command::ECHO:  handleEcho(input);    break;
-            case Command::TYPE:  handleType(parsed.args);    break;
+            case Command::EXIT: return 0;
+            case Command::CAT:  handleCat(parsed); break;
             case Command::UNKNOWN:
                 executeExternalCommand(parsed.command, parsed.rawArgs);
                 break;
+            default: break;
         }
     }
 }
