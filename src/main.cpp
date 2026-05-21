@@ -5,6 +5,7 @@
 #include "utils/shell_state/shell_state.hpp"
 #include "utils/handlers/input_handler.hpp"
 #include "src/commands/handlers/tools/cat.hpp"
+#include "src/commands/handlers/tools/echo.hpp"
 using namespace std;
 
 int main() {
@@ -33,6 +34,7 @@ int main() {
         switch (cmd) {
             case Command::EXIT: return 0;
             case Command::CAT:  handleCat(parsed, state); break;
+            case Command::ECHO: handleEcho(parsed, state); break;
             case Command::UNKNOWN:
                 executeExternalCommand(parsed.command, parsed.rawArgs);
                 break;

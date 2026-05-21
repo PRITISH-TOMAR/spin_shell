@@ -12,26 +12,23 @@ ParsedInput parseInput(const string &input)
         return parsed; // Return empty if no command is found
     }
 
-    while (stream >> token) /// auto split by whitespace
+    while (stream >> token)
     {
         parsed.rawArgs.push_back(token);
-    }
 
-    if (token.size() > 1 && token[0] == '-' && token[1] != '-')
-    {
-        for (size_t i = 1; i < token.size(); i++)
+        if (token.size() > 1 && token[0] == '-' && token[1] != '-')
         {
-            parsed.shortFlags[token[i]] = true;
+            for (size_t i = 1; i < token.size(); i++)
+                parsed.shortFlags[token[i]] = true;
         }
-    }
-    else if (token.size() > 2 && token.substr(0, 2) == "--")
-    {
-        string flagName = token.substr(2);
-        parsed.longFlags[flagName] = true;
-    }
-    else
-    {
-        parsed.files.push_back(token);
+        else if (token.size() > 2 && token.substr(0, 2) == "--")
+        {
+            parsed.longFlags[token.substr(2)] = true;
+        }
+        else
+        {
+            parsed.files.push_back(token);
+        }
     }
     return parsed;
 }
