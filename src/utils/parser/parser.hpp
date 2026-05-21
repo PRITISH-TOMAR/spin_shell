@@ -14,3 +14,4 @@ struct ParsedInput {
 };
 
 ParsedInput parseInput(const string& input);
+bool hasFlag(const ParsedInput& parsed, char s, const string& l);
