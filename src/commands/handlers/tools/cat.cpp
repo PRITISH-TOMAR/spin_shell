@@ -1,5 +1,6 @@
 #include "cat.hpp"
 #include "src/utils/parser/parser.hpp"
+#include "src/utils/shell_state/shell_state.hpp"
 #include <fstream>
 #include <iostream>
 #include <filesystem>
@@ -7,14 +8,14 @@
 
 namespace fs = filesystem;
 
-static void printFileContent(const fs ::path &path, bool showLineNumbers)
+static bool printFileContent(const fs::path &path, bool showLineNumbers)
 {
     ifstream file(path);
 
     if (!file.is_open())
     {
         cerr << "cat: " << path.string() << ": Permission denied\n";
-        return;
+        return false;
     }
 
     string line;
@@ -32,6 +33,7 @@ static void printFileContent(const fs ::path &path, bool showLineNumbers)
             cout << line << "\n";
         }
     }
+    return true;
 }
 
 static bool validatePath(const fs::path& resolved, const string& original){
@@ -46,34 +48,26 @@ static bool validatePath(const fs::path& resolved, const string& original){
     return true;
 }
 
-void handleCat(const ParsedInput& parsed){
+int handleCat(const ParsedInput& parsed, ShellState &state){
 
-    if(parsed.rawArgs.empty()){
+    if(parsed.rawArgs.empty() || parsed.files.empty()){
         cerr << "cat: missing file operand\n";
         cerr << "Usage: cat [OPTION]... [FILE]...\n";
-        return;
+        return state.setStateToStatusCode(1);
     }
 
-    // parse flags
     bool numberAllLines = hasFlag(parsed, 'n', "number");
     bool numberNonEmptyLines = hasFlag(parsed, 'b', "number-nonblank");
-
     bool showLineNumbers = numberAllLines || numberNonEmptyLines;
 
-    if(parsed.files.empty()){
-        cerr << "cat: missing file operand\n";
-        cerr << "Usage: cat [OPTION]... [FILE]...\n";
-        return;
-    }
+    int exitCode = 0;
 
-    // process each file in order
     for(const string& fileArg: parsed.files){
-        fs:: path resolved = fs::weakly_canonical(fileArg);
+        fs::path resolved = fs::weakly_canonical(fileArg);
 
-        if(!validatePath(resolved, fileArg))continue;
-
-        printFileContent(resolved, showLineNumbers);
+        if(!validatePath(resolved, fileArg) || !printFileContent(resolved, showLineNumbers))
+            exitCode = 1;
     }
 
-
+    return state.setStateToStatusCode(exitCode);
 }

@@ -3,6 +3,7 @@
 #include "commands/commands.hpp"
 #include "utils/parser/parser.hpp"
 #include "utils/executors/executor.hpp"
+#include "utils/shell_state/shell_state.hpp"
 #include "src/commands/handlers/tools/cat.hpp"
 using namespace std;
 
@@ -10,6 +11,7 @@ int main() {
     cout << unitbuf;
     cerr << unitbuf;
 
+    ShellState state;
     string input;
 
     while (true) {
@@ -21,6 +23,10 @@ int main() {
         };
         if (input.empty()) continue;
 
+        if (input == "$?") { state.printExitStatus(); continue; }
+
+        state.expandStatusCode(input);
+
         ParsedInput parsed = parseInput(input);
 
         Command cmd = Command::UNKNOWN;
@@ -29,7 +35,7 @@ int main() {
 
         switch (cmd) {
             case Command::EXIT: return 0;
-            case Command::CAT:  handleCat(parsed); break;
+            case Command::CAT:  handleCat(parsed, state); break;
             case Command::UNKNOWN:
                 executeExternalCommand(parsed.command, parsed.rawArgs);
                 break;
