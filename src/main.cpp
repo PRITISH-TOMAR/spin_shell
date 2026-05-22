@@ -20,7 +20,7 @@ int main()
 
     while (true)
     {
-        cout << "$ ";
+        cout << state.getPrompt();
 
         if (!getline(cin, input))
         {

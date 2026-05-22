@@ -59,7 +59,11 @@ struct ShellState
                 end++;
 
             string varName = input.substr(pos + 1, end - pos - 1);
-            if (varName.empty()) { pos++; continue; }
+            if (varName.empty())
+            {
+                pos++;
+                continue;
+            }
 
             string value = lookupVariableValue(varName);
             input.replace(pos, end - pos, value);
@@ -71,13 +75,31 @@ struct ShellState
     bool parseAndStoreVariableAssignment(const string &command)
     {
         size_t eq = command.find('=');
-        if (eq == string::npos || eq == 0) return false;
+        if (eq == string::npos || eq == 0)
+            return false;
 
         string name = command.substr(0, eq);
         for (char c : name)
-            if (!isalnum(c) && c != '_') return false;
+            if (!isalnum(c) && c != '_')
+                return false;
 
         variables[name] = command.substr(eq + 1);
         return true;
+    }
+
+    string getPrompt() const
+    {
+        const char *home = getenv("HOME");
+
+        if (home)
+        {
+            string homeStr(home);
+
+            if (currentDirectory.find(homeStr) == 0)
+            { // starts with HOME
+                return "~" + currentDirectory.substr(homeStr.size()) + "$ ";
+            }
+        }
+        return currentDirectory + "$ ";
     }
 };

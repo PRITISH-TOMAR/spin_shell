@@ -2,17 +2,6 @@
 
 ## Pending
 
-### cd
-- [ ] Use `ShellState.currentDirectory` to track cwd
-- [ ] Support `cd ~` (home dir via `$HOME`)
-- [ ] Support `cd -` (previous directory, store `previousDirectory` in ShellState)
-- [ ] Support `cd ..` and relative paths
-- [ ] Update `ShellState.currentDirectory` on success via `recordCommandExitCode`
-- [ ] Use `chdir()` (Linux/Mac) / `_chdir()` (Windows)
-
-### pwd
-- [ ] Read from `ShellState.currentDirectory` instead of calling `getcwd` each time
-- [ ] Initialize `currentDirectory` in `ShellState` constructor using `getcwd`
 
 ### ls
 - [ ] Default to `ShellState.currentDirectory` when no path arg given
@@ -36,8 +25,3 @@
 - [ ] Support `-p` flag (create parent dirs recursively)
 - [ ] Error on existing dir unless `-p` is passed
 
-## Completed
-- [x] cat  — with `-n`, `-b` flags, exit code via ShellState
-- [x] echo — with `-n` flag, variable expansion via ShellState
-- [x] exit
-- [x] ShellState — lastExitCode, variables, expandShellVariablesInPlace, parseAndStoreVariableAssignment
