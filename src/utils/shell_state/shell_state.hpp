@@ -11,9 +11,10 @@ struct ShellState
     int lastExitCode;
     vector<string> commandHistory;
     string currentDirectory;
+    string previousDirectory;
     unordered_map<string, string> variables;
 
-    ShellState() : lastExitCode(0) {}
+    ShellState();
 
     int recordCommandExitCode(int code)
     {

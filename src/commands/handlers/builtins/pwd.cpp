@@ -5,7 +5,8 @@
 using namespace std;
 namespace fs = std ::filesystem;
 
-void handlePwd()
+int handlePwd(ShellState& state)
 {
     cout << fs::current_path().string() << "\n";
+    return state.recordCommandExitCode(0);
 }
