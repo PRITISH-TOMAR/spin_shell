@@ -1,6 +1,7 @@
 #include "cat.hpp"
 #include "src/utils/parser/parser.hpp"
 #include "src/utils/shell_state/shell_state.hpp"
+#include "src/utils/path/path.hpp"
 #include <fstream>
 #include <iostream>
 #include <filesystem>
@@ -63,7 +64,7 @@ int handleCat(const ParsedInput& parsed, ShellState &state){
     int exitCode = 0;
 
     for(const string& fileArg: parsed.files){
-        fs::path resolved = fs::weakly_canonical(fileArg);
+        fs::path resolved = resolvePath(fileArg);
 
         if(!validatePath(resolved, fileArg) || !printFileContent(resolved, showLineNumbers))
             exitCode = 1;
