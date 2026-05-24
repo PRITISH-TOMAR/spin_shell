@@ -1,13 +1,10 @@
 #include <iostream>
 #include <string>
 #include "commands/commands.hpp"
+#include "commands/dispatch.hpp"
 #include "utils/executors/executor.hpp"
 #include "utils/shell_state/shell_state.hpp"
 #include "utils/handlers/input_handler.hpp"
-#include "src/commands/handlers/tools/cat.hpp"
-#include "src/commands/handlers/builtins/cd.hpp"
-#include "src/commands/handlers/builtins/pwd.hpp"
-#include "src/commands/handlers/tools/echo.hpp"
 using namespace std;
 
 int main()
@@ -39,28 +36,12 @@ int main()
         if (it != commandMap.end())
             cmd = it->second;
 
-        switch (cmd)
-        {
-        case Command::EXIT:
+        if (cmd == Command::EXIT)
             return 0;
-        case Command::CAT:
-            handleCat(parsed, state);
-            break;
-        case Command::ECHO:
-            handleEcho(parsed, state);
-            break;
-        case Command::PWD:
-            handlePwd(state);
-            break;
-        case Command::CD:
-            handleCd(parsed.rawArgs, state);
-            break;
 
-        case Command::UNKNOWN:
+        if (cmd == Command::UNKNOWN)
             executeExternalCommand(parsed.command, parsed.rawArgs);
-            break;
-        default:
-            break;
-        }
+        else
+            dispatchCommand(cmd, parsed, state);
     }
 }
