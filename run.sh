@@ -4,8 +4,10 @@ set -e
 # Clean up old build directory
 rm -rf build
 
-# Generate CMake build files using MinGW  DIVE IN DETAIL LATER : : -B build folder , -S :source dir - current
-cmake -G "MinGW Makefiles" -B build -S .
+# Generate CMake build files using the platform default generator
+# Windows (MinGW): pass -G "MinGW Makefiles" manually if needed
+# Linux/Mac: default generator (Unix Makefiles / Ninja) is used automatically
+cmake -B build -S .
 
 # Compile the project
 cmake --build build
