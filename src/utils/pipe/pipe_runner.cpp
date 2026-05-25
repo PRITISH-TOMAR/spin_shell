@@ -20,15 +20,15 @@ using namespace std;
 #endif
 
 // Run 1 segment
-static string runSegment(const string &rawSegment, string &inputBuf, bool isLast, ShellState &state);
+static string runSegment(const string &rawSegment, const string &inputBuf, bool isLast, ShellState &state);
 
 #ifdef _WIN32
-// Windows: Spawn external process, wiring stdin/out via anomnymous HANDLEs
-static string runExternalWindows(const string &path, vector<string> &args, const string &inputBuf, bool isLast);
+// Windows: Spawn external process, wiring stdin/out via anonymous HANDLEs
+static string runExternalWindows(const string &path, const vector<string> &args, const string &inputBuf, bool isLast);
 
 #else
 // Linux/Mac: fork + dup2 + execv with anonymous pipe fds
-static string runExternalUnix(const string &path, vector<string> &args, const string &inputBuf, bool isLast);
+static string runExternalUnix(const string &path, const vector<string> &args, const string &inputBuf, bool isLast);
 
 #endif
 
@@ -128,4 +128,109 @@ static string runSegment(const string &rawSegment, const string &inputBuf, bool 
 #else
     return runExternalUnix(path, parsed.rawArgs, inputBuf, isLast);
 #endif
+}
+
+static string runExternalWindows(const string &path, const vector<string> &args, const string &inputBuf, bool isLast)
+{
+    HANDLE hStdinRead = nullptr, hStdinWrite = nullptr;
+    HANDLE hStdoutRead = nullptr, hStdoutWrite = nullptr;
+
+    // Pipe Handle must be inheritable for child process to use them
+    SECURITY_ATTRIBUTES sa{};
+    sa.nLength = sizeof(sa);
+    sa.bInheritHandle = TRUE;
+    sa.lpSecurityDescriptor = nullptr;
+
+    // create stdin pipe; child reads from hStdinRead
+    if (!CreatePipe(&hStdinRead, &hStdinWrite, &sa, 0))
+        return "";
+
+    // The write end is for parent only -- do NOT inherit it, or the child will block waiting for more input even after the parent finishes writing
+    SetHandleInformation(hStdinWrite, HANDLE_FLAG_INHERIT, 0);
+
+    // create stdout pipe only when we need to capture (non-last segment)
+    if (!isLast)
+    {
+        if (!CreatePipe(&hStdoutRead, &hStdoutWrite, &sa, 0))
+        {
+            CloseHandle(hStdinRead);
+            CloseHandle(hStdinWrite);
+            return "";
+        }
+
+        // Read end is for parent only -- do NOT inherit it
+        SetHandleInformation(hStdoutRead, HANDLE_FLAG_INHERIT, 0);
+    }
+
+    // Build the command-line string expected by CreateProcess: "path" "arg1" "arg2"
+    // Fix: each arg needs a leading space, otherwise they concatenate: "path""arg1"
+    string cmdLineStr = "\"" + path + "\"";
+    for (const auto &arg : args)
+        cmdLineStr += " \"" + arg + "\"";
+
+    // CreateProcessA may modify the buffer, so copy into a writable vector<char>
+    // instead of passing c_str() (read-only) via const_cast — that would be UB
+    vector<char> cmdLine(cmdLineStr.begin(), cmdLineStr.end());
+    cmdLine.push_back('\0');
+
+    STARTUPINFOA si{};
+    si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESTDHANDLES;
+    si.hStdInput  = hStdinRead;
+    si.hStdOutput = isLast ? GetStdHandle(STD_OUTPUT_HANDLE) // real console
+                           : hStdoutWrite;                   // capture pipe
+    si.hStdError  = GetStdHandle(STD_ERROR_HANDLE);          // always real stderr
+
+    PROCESS_INFORMATION pi{};
+    BOOL ok = CreateProcessA(
+        nullptr,
+        cmdLine.data(), // writable buffer
+        nullptr, nullptr,
+        TRUE,           // bInheritHandles: child gets copies of inheritable handles
+        0, nullptr, nullptr,
+        &si, &pi
+    );
+
+    // Close parent's copies of the child-side pipe ends immediately after spawn.
+    // Leaving them open prevents EOF: child's ReadFile/WriteFile never unblocks.
+    CloseHandle(hStdinRead);
+    if (!isLast) CloseHandle(hStdoutWrite);
+
+    if (!ok)
+    {
+        if (!isLast) CloseHandle(hStdoutRead);
+        CloseHandle(hStdinWrite);
+        cerr << "CreateProcess failed (error " << GetLastError() << ")\n";
+        return "";
+    }
+
+    // Write inputBuf to child's stdin, then close the write end to signal EOF.
+    // Without closing, the child blocks forever waiting for more input.
+    if (!inputBuf.empty())
+    {
+        DWORD written = 0;
+        WriteFile(hStdinWrite, inputBuf.data(),
+                  static_cast<DWORD>(inputBuf.size()), &written, nullptr);
+    }
+    CloseHandle(hStdinWrite);
+
+    // Read child's stdout into outputBuf (only for non-last segments).
+    // ReadFile blocks until data arrives or the write end closes (child exits).
+    string outputBuf;
+    if (!isLast)
+    {
+        char buf[4096];
+        DWORD bytesRead = 0;
+        while (ReadFile(hStdoutRead, buf, sizeof(buf), &bytesRead, nullptr) && bytesRead > 0)
+            outputBuf.append(buf, bytesRead);
+        CloseHandle(hStdoutRead);
+    }
+
+    // Wait for child to fully exit before returning so the next segment
+    // does not start reading outputBuf before the child has finished writing it.
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    return outputBuf; // "" when isLast — child wrote directly to the console
 }
