@@ -130,6 +130,7 @@ static string runSegment(const string &rawSegment, const string &inputBuf, bool 
 #endif
 }
 
+#ifdef _WIN32
 static string runExternalWindows(const string &path, const vector<string> &args, const string &inputBuf, bool isLast)
 {
     HANDLE hStdinRead = nullptr, hStdinWrite = nullptr;
@@ -176,29 +177,30 @@ static string runExternalWindows(const string &path, const vector<string> &args,
     STARTUPINFOA si{};
     si.cb = sizeof(si);
     si.dwFlags = STARTF_USESTDHANDLES;
-    si.hStdInput  = hStdinRead;
+    si.hStdInput = hStdinRead;
     si.hStdOutput = isLast ? GetStdHandle(STD_OUTPUT_HANDLE) // real console
                            : hStdoutWrite;                   // capture pipe
-    si.hStdError  = GetStdHandle(STD_ERROR_HANDLE);          // always real stderr
+    si.hStdError = GetStdHandle(STD_ERROR_HANDLE);           // always real stderr
 
     PROCESS_INFORMATION pi{};
     BOOL ok = CreateProcessA(
         nullptr,
         cmdLine.data(), // writable buffer
         nullptr, nullptr,
-        TRUE,           // bInheritHandles: child gets copies of inheritable handles
+        TRUE, // bInheritHandles: child gets copies of inheritable handles
         0, nullptr, nullptr,
-        &si, &pi
-    );
+        &si, &pi);
 
     // Close parent's copies of the child-side pipe ends immediately after spawn.
     // Leaving them open prevents EOF: child's ReadFile/WriteFile never unblocks.
     CloseHandle(hStdinRead);
-    if (!isLast) CloseHandle(hStdoutWrite);
+    if (!isLast)
+        CloseHandle(hStdoutWrite);
 
     if (!ok)
     {
-        if (!isLast) CloseHandle(hStdoutRead);
+        if (!isLast)
+            CloseHandle(hStdoutRead);
         CloseHandle(hStdinWrite);
         cerr << "CreateProcess failed (error " << GetLastError() << ")\n";
         return "";
@@ -234,3 +236,106 @@ static string runExternalWindows(const string &path, const vector<string> &args,
 
     return outputBuf; // "" when isLast — child wrote directly to the console
 }
+#else
+static string runExternalUnix(const string &path, const vector<string> &args, const string &inputBuf, bool isLast)
+{
+    // stdin pipe: parent writes inputBuf -> child reads it through stdin
+    // stdout pipe: chile writes stdout -> parents reads it into outputBuf
+
+    int stdinPipe[2] = {-1, -1}; // ind 0 red end, ind 1 write end
+    int stdoutPipe[2] = {-1, -1};
+
+    // always create stdin pipe so we can feed inputBuf to the child
+    if (pipe(stdinPipe) == -1)
+        return "";
+
+    // create stdout pipe only ifNOT last segment
+    if (!isLast && pipe(stdoutPipe) == -1)
+    {
+        close(stdinPipe[0]);
+        close(stdinPipe[1]);
+        return "";
+    }
+
+    // build a non terminated argv[] required by execv:
+    // argv[0] = program path, [1]= argumenet 1 .....agrv[N+1]=nullptr
+
+    vector<const char *> argv;
+    argv.push_back(path.c_str());
+
+    for (const auto &arg : args)
+    {
+        argv.push_back(arg.c_str());
+    }
+
+    argv.push_back(nullptr);
+
+    pid_t pid = fork(); // duplicate the process
+    if (pid < 0)        // fork failed
+    {
+        close(stdinPipe[0]);
+        close(stdinPipe[1]);
+
+        if (!isLast)
+        {
+            close(stdoutPipe[0]);
+            close(stdoutPipe[1]);
+        }
+
+        return "";
+    }
+
+    if (pid == 0) // Child Process
+    {
+        // child will read whatever parent write to stdinPipe[1]
+        // wir stdinPipe read-end
+        dup2(stdinPipe[0], STDIN_FILENO);
+        close(stdinPipe[0]); // originl fd no longer needed after dup2
+        close(stdinPipe[1]); // child never writes to its own stdin pipe
+
+        if (!isLast)
+        {
+            // Wire stdoutPipe write-end → fd 1 (STDOUT_FILENO)
+            // Everything the child prints will be readable by the parent
+            dup2(stdoutPipe[1], STDOUT_FILENO);
+            close(stdoutPipe[0]); // child never reads from stdout pipe
+            close(stdoutPipe[1]); // original fd no longer needed after dup2
+        }
+
+        // If isLast: fd 1 is left untouched → output goes to the real terminal
+
+        // Replace child image with the target executable
+        execv(path.c_str(), const_cast<char *const *>(argv.data()));
+        _exit(1); // execv only returns on error
+    }
+
+    // ── PARENT PROCESS ─────────
+
+    close(stdinPipe[0]); // parent never reads from stdin pipe
+
+    // Feed inputBuf into the child's stdin, then close the write end.
+    // Closing signals EOF so the child's read() eventually returns 0.
+    if (!inputBuf.empty())
+        write(stdinPipe[1], inputBuf.data(), inputBuf.size());
+    close(stdinPipe[1]);
+
+    string outputBuf;
+    if (!isLast)
+    {
+        close(stdoutPipe[1]); // parent never writes to stdout pipe
+
+        // Drain the child's stdout into outputBuf in 4 KB chunks
+        char buf[4096];
+        ssize_t n;
+        while ((n = read(stdoutPipe[0], buf, sizeof(buf))) > 0)
+            outputBuf.append(buf, static_cast<size_t>(n));
+        close(stdoutPipe[0]);
+    }
+    // If isLast: child already wrote directly to the terminal, nothing to collect
+
+    int status;
+    waitpid(pid, &status, 0); // reap child to avoid zombie process
+
+    return outputBuf; // empty string when isLast (caller ignores it)
+}
+#endif
