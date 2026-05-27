@@ -3,12 +3,93 @@
 ## Pending
 
 ### pipe `|` ⬅ PRIORITY 1
-- [ ] Split raw input on `|` into segments before dispatch
-- [ ] Set up OS-level pipe fds between segments (`pipe()` + `dup2()` on Linux; `CreatePipe` on Windows)
-- [ ] Loop over segments in REPL, wiring stdout → stdin across adjacent commands
-- [ ] Refactor builtin handler signatures to accept an `ostream&` output target
-- [ ] Rewrite Windows executor (`_spawnvp` → `CreateProcess`) to support redirected handles
-- [ ] Handle edge cases: leading/trailing `|`, empty segments, pipe to builtin
+
+#### Concept
+A pipe connects the **stdout of one command to the stdin of the next**.
+The shell splits the raw input into segments on `|`, runs each segment in order,
+and feeds the output of each as the input of the next.
+
+```
+echo "hello world" | grep "hello" | cat
+      ↓ stdout           ↓ stdout
+                ↓ stdin            ↓ stdin
+```
+
+#### Flow (per pipeline execution)
+
+```
+raw input: "cmd1 | cmd2 | cmd3"
+              │
+              ▼
+        containsPipe()          ← detect unquoted '|'
+              │
+              ▼
+        splitOnPipe()           ← ["cmd1", "cmd2", "cmd3"]
+              │
+              ▼
+        runPipeline(segments)
+              │
+    ┌─────────┴──────────────────────────┐
+    │  for each segment i:               │
+    │                                    │
+    │   prepareInputForDispatch()        │ ← trim, expand vars, parse
+    │         │                          │
+    │   is builtin?                      │
+    │    YES → redirect cin/cout         │ ← rdbuf swap (no handler change needed)
+    │           dispatchCommand()        │
+    │           restore cin/cout         │
+    │    NO  → external process          │
+    │           Windows: CreateProcess   │ ← stdin/stdout wired via HANDLE
+    │           Linux:   fork+dup2+exec  │ ← stdin/stdout wired via fd
+    │                                    │
+    │   outputBuf ──────────────────────►│ becomes inputBuf for segment i+1
+    └────────────────────────────────────┘
+              │
+    last segment → output goes to real stdout
+```
+
+#### Two-layer strategy
+| Command type | stdin source | stdout destination | Method |
+|---|---|---|---|
+| Builtin (not last) | `istringstream(inputBuf)` via `cin.rdbuf()` | `ostringstream` via `cout.rdbuf()` | C++ stream swap |
+| Builtin (last) | `istringstream(inputBuf)` via `cin.rdbuf()` | real `cout` | C++ stream swap |
+| External (not last) | anonymous pipe write → child stdin | anonymous pipe read → `outputBuf` | OS pipe + process |
+| External (last) | anonymous pipe write → child stdin | real console handle | OS pipe + process |
+
+#### Windows: CreateProcess pipe wiring
+```
+Parent writes inputBuf → hStdinWrite → [pipe] → hStdinRead → child stdin
+Child stdout → hStdoutWrite → [pipe] → hStdoutRead → Parent reads → outputBuf
+```
+
+#### Linux: fork + dup2 pipe wiring (follow-up)
+```
+pipe(fds)                        // fds[0]=read end, fds[1]=write end
+fork()
+  child:  dup2(fds[1], STDOUT_FILENO)   // child stdout → pipe write end
+          dup2(prev_read, STDIN_FILENO)  // child stdin  ← previous pipe read end
+          execv(...)
+  parent: close(fds[1])                 // close write end in parent
+          read from fds[0] into buf     // capture output
+```
+
+#### Edge cases to handle
+- Leading/trailing `|` → produces empty segment → skip silently
+- Double `||` → empty middle segment → skip silently
+- `|` inside single/double quotes → NOT a pipe separator
+- `EXIT` inside a pipeline → no-op (only exits at top-level REPL)
+- Command not found in a segment → print error, pass empty string forward
+
+#### Checklist
+- [x] `splitOnPipe()` — split on unquoted `|`
+- [x] `containsPipe()` — fast pre-check before splitting
+- [x] `pipe_utils.hpp / pipe_utils.cpp` — created
+- [x] `pipe_runner.hpp` — created
+- [x] `pipe_runner.cpp` — implement `runSegment` + `runPipeline`
+- [x] Wire `containsPipe` + `runPipeline` into `main.cpp` REPL loop
+- [x] Windows: `CreateProcess`-based external segment runner
+- [x] Linux: `fork()`+`dup2()`+`pipe()` external segment runner
+- [ ] Handle all edge cases above
 
 
 ### ls
@@ -141,3 +222,5 @@
 - [ ] Subshell `(cmd1; cmd2)` — isolated environment
 - [ ] `exec` — replace shell process with a command
 - [ ] `trap` — handle signals in scripts
+
+---

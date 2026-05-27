@@ -1,3 +1,11 @@
+// Windows.h must come before C++ standard headers to avoid std::byte vs byte ambiguity
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <unistd.h>
+#include <sys/wait.h>
+#endif
+
 #include "pipe_runner.hpp"
 #include "pipe_utils.hpp"
 
@@ -11,13 +19,6 @@
 // Buitin/toool handler wired in main.cpp
 // ALWAYS in Sync with main.cpp SWITCH BLOCK
 using namespace std;
-
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <unistd.h>
-#include <sys/wait.h>
-#endif
 
 // Run 1 segment
 static string runSegment(const string &rawSegment, const string &inputBuf, bool isLast, ShellState &state);
