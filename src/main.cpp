@@ -5,6 +5,8 @@
 #include "utils/executors/executor.hpp"
 #include "utils/shell_state/shell_state.hpp"
 #include "utils/handlers/input_handler.hpp"
+#include "utils/pipe/pipe_utils.hpp"
+#include "utils/pipe/pipe_runner.hpp"
 using namespace std;
 
 int main()
@@ -26,6 +28,13 @@ int main()
         }
         if (input.empty())
             continue;
+
+        if (containsPipe(input))
+        {
+            vector<string> segments = splitOnPipe(input);
+            runPipeline(segments, state);
+            continue;
+        }
 
         ParsedInput parsed;
         if (prepareInputForDispatch(input, state, parsed))
