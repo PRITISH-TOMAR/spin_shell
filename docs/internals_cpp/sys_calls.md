@@ -77,3 +77,38 @@ read(fd[0]) ◄── waiting ────────────── EOF nev
      ↓
   DEADLOCK
 ```
+
+#### 3. execv
+#### 4. waitpid
+#### 5. dup2
+#### 6. close
+#### 7. read
+#### 8. write
+#### 9. _exit
+#### 10. chdir
+#### 11. getcwd
+
+---
+
+## System Call vs Library Function
+
+| | System Call | Library Function |
+|---|---|---|
+| Runs in | Kernel space | User space |
+| Kernel boundary crossed? | Yes | No (may wrap a syscall internally) |
+| Header | `<unistd.h>`, `<sys/types.h>`, etc. | `<stdio.h>`, `<stdlib.h>`, etc. |
+| Cost | Higher (context switch) | Lower |
+| Examples | `fork`, `pipe`, `read`, `write`, `execv` | `fflush`, `getenv`, `printf` |
+
+```
+User Space       │  Kernel Space
+─────────────────┼──────────────────
+printf()         │
+  └─ fwrite()    │
+       └─────────┼──► write()   ← system call crosses here
+                 │       └─► kernel writes to fd
+```
+
+- **Library functions** live in user space and are provided by libc (e.g. glibc). They may or may not invoke a system call internally.
+- **System calls** are the only way a process can request privileged operations from the OS kernel — things like creating processes, opening files, or allocating memory.
+
