@@ -5,3 +5,4 @@
 
 - It writes immediately whatever is in the buffer.
 
+#### 2. getenv
