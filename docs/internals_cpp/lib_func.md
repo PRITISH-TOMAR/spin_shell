@@ -6,3 +6,9 @@
 - It writes immediately whatever is in the buffer.
 
 #### 2. getenv
+- The getenv() function searches the environment list to find the
+       environment variable name, and returns a pointer to the
+       corresponding value string.
+
+- The secure_getenv() function is just like getenv() except that it
+       returns NULL in cases where "secure execution" is required.
