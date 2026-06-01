@@ -78,9 +78,40 @@ read(fd[0]) ◄── waiting ────────────── EOF nev
   DEADLOCK
 ```
 
-#### 3. execv
+#### 3. execv <unistd.h>
+
+- execute program
+- library wrapper that replaces the current process image with a new program, invoked via the underlying execve system call.
+```cpp
+#include <unistd.h>
+
+int main() {
+    char *args[] = {"/bin/ls", "-l", NULL};
+    execv(args[0], args);
+    // Code below only executes if execv fails
+    return 0;
+}   
+```
+
+
 #### 4. waitpid
+- The waitpid() system call suspends the execution of the current process until a specific child process, identified by its PID, changes state (terminates, stops, or continues). 
+- Its syntax is pid_t waitpid(pid_t pid, int *status, int options), where pid determines which child to wait for, status stores the child's exit or signal information, and options modify behavior.
+
+
 #### 5. dup2
+- duplicates a file descriptor
+```cpp
+dup2(oldfd, newfd);
+
+int fd = open("output.txt", O_WRONLY | O_CREAT, 0644);
+
+dup2(fd, 1);  // Make fd 1 (stdout) point to output.txt
+
+printf("Hello!");  // This now writes to output.txt, NOT the screen
+```
+
+
 #### 6. close
 #### 7. read
 #### 8. write
