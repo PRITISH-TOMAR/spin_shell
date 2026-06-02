@@ -7,6 +7,8 @@
 #include "src/commands/handlers/tools/echo.hpp"
 #include "src/commands/handlers/builtins/cd.hpp"
 #include "src/commands/handlers/builtins/pwd.hpp"
+#include "src/commands/handlers/tools/mkdir.hpp"
+
 
 int dispatchCommand(Command cmd, const ParsedInput& parsed, ShellState& state)
 {
