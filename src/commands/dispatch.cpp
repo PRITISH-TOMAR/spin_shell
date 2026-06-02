@@ -21,7 +21,7 @@ int dispatchCommand(Command cmd, const ParsedInput& parsed, ShellState& state)
 
     // TODO: wire these as their handlers are implemented
     // case Command::GREP:    return handleGrep(parsed, state);
-    // case Command::MKDIR:   return handleMkdir(parsed, state);
+    case Command::MKDIR:   return handleMkdir(parsed, state);
     // case Command::RM:      return handleRm(parsed, state);
     // case Command::CP:      return handleCp(parsed, state);
     // case Command::MV:      return handleMv(parsed, state);
