@@ -1,5 +1,5 @@
 #pragma once
-#include <string>
-#include <vector>
-using namespace std;
-void handleLs(const vector<string>& rawArgs);
+#include "src/utils/parser/parser.hpp"
+#include "src/utils/shell_state/shell_state.hpp"
+
+int handleLs(const ParsedInput& parsed, ShellState& state);
