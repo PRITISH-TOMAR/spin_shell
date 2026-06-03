@@ -1,6 +1,6 @@
 #include "touch.hpp"
 #include "src/utils/path/path.hpp"
-#include "src/utils/handlers/flag_value.hpp"
+#include "src/utils/handlers/flag_set.hpp"
 #include <iostream>
 #include <filesystem>
 #include <fstream>
@@ -12,21 +12,13 @@ namespace fs = filesystem;
 using fs_time = fs::file_time_type;
 
 struct TouchOptions {
-    bool accessOnly   = false;  // -a  : update only access time
-    bool modifyOnly   = false;  // -m  : update only modification time
-    bool noCreate     = false;  // -c  : skip file if it doesn't exist
-    string dateStr    = "";     // -d  : datetime string e.g. "2024-01-01 12:00"
-    string stampStr   = "";     // -t  : timestamp in [[CC]YY]MMDDhhmm[.ss] format
-    string refFile    = "";     // -r  : use timestamps from this reference file
+    bool accessOnly = false;
+    bool modifyOnly = false;
+    bool noCreate   = false;
+    string dateStr;
+    string stampStr;
+    string refFile;
 };
-
-// Returns true if the given token is a value argument to any value-flag.
-// Used to filter those tokens out of the files list.
-static bool isFlagValue(const string& token, const TouchOptions& opts) {
-    return (token == opts.dateStr  && !opts.dateStr.empty())  ||
-           (token == opts.stampStr && !opts.stampStr.empty()) ||
-           (token == opts.refFile  && !opts.refFile.empty());
-}
 
 // Parses a -d datetime string ("2024-01-01 12:00" or "2024-01-01T12:00")
 static time_t parseDateString(const string& s) {
@@ -123,14 +115,16 @@ int handleTouch(const ParsedInput& parsed, ShellState& state) {
         return state.recordCommandExitCode(1);
     }
 
-    // Build options - value flags extracted manually from rawArgs
+    FlagSet flags(TOUCH_FLAGS);
+    flags.parse(parsed);
+
     TouchOptions opts;
-    opts.accessOnly = hasFlag(parsed, 'a', "");
-    opts.modifyOnly = hasFlag(parsed, 'm', "");
-    opts.noCreate   = hasFlag(parsed, 'c', "no-create");
-    opts.dateStr    = getFlagValue(parsed.rawArgs, 'd', "date");
-    opts.stampStr   = getFlagValue(parsed.rawArgs, 't', "");
-    opts.refFile    = getFlagValue(parsed.rawArgs, 'r', "reference");
+    opts.accessOnly = flags.has('a');
+    opts.modifyOnly = flags.has('m');
+    opts.noCreate   = flags.has('c');
+    opts.dateStr    = flags.value('d');
+    opts.stampStr   = flags.value('t');
+    opts.refFile    = flags.value('r');
 
     // Resolve the target time to apply.
     // Priority: -r > -d > -t > now
@@ -180,8 +174,7 @@ int handleTouch(const ParsedInput& parsed, ShellState& state) {
     int exitCode = 0;
 
     for (const string& target : parsed.files) {
-        // Skip tokens that are values belonging to -d, -t, or -r
-        if (isFlagValue(target, opts)) continue;
+        if (flags.isValueToken(target)) continue;
 
         fs::path resolved = resolvePath(target);
 
