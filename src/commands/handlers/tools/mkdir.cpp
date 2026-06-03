@@ -1,5 +1,6 @@
 #include "mkdir.hpp"
 #include "src/utils/path/path.hpp"
+#include "src/utils/handlers/flag_value.hpp"
 #include <iostream>
 #include <filesystem>
 #include <string>
@@ -12,16 +13,6 @@ struct MkdirOptions
     bool verbose = false; // -v : print a message for each created directory
     string mode = "";     // -m : octal permission bits (e.g. "755")
 };
-
-static string extractMode(const vector<string> &rawArgs)
-{
-    for (size_t i = 0; i + 1 < rawArgs.size(); i++)
-    {
-        if (rawArgs[i] == "-m" || rawArgs[i] == "--mode")
-            return rawArgs[i + 1];
-    }
-    return "";
-}
 
 // Converts "755" → fs::perms via stoi with base 8.
 static bool applyMode(const fs::path &dir, const string &modeStr)
@@ -83,24 +74,13 @@ int handleMkdir(const ParsedInput &parsed, ShellState &state)
     MkdirOptions opts;
     opts.parents = hasFlag(parsed, 'p', "parents");
     opts.verbose = hasFlag(parsed, 'v', "verbose");
-    opts.mode = extractMode(parsed.rawArgs);
+    opts.mode = getFlagValue(parsed.rawArgs, 'm', "mode");
 
     int exitCode = 0;
 
     for (const string &target : parsed.files)
     {
-        // follows -m / --mode in rawArgs
-        bool isModeValue = false;
-        for (size_t i = 0; i + 1 < parsed.rawArgs.size(); i++)
-        {
-            if ((parsed.rawArgs[i] == "-m" || parsed.rawArgs[i] == "--mode") &&
-                parsed.rawArgs[i + 1] == target)
-            {
-                isModeValue = true;
-                break;
-            }
-        }
-        if (isModeValue)
+        if (!opts.mode.empty() && target == opts.mode)
             continue;
 
         fs::path resolved = resolvePath(target);
