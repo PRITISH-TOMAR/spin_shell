@@ -61,7 +61,7 @@ void executeExternalCommand(const string &command, const vector<string> &rawArgs
         int status;
         waitpid(pid, &status, 0);
 
-        if (WIFEEXITED(status) && WEXITSTATUS(status) != 0)
+        if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
         {
             cerr << "Error occurred while executing command\n"
                  << WEXITSTATUS(status) << "\n";
