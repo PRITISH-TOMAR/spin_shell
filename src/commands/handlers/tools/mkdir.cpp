@@ -1,6 +1,6 @@
 #include "mkdir.hpp"
 #include "src/utils/path/path.hpp"
-#include "src/utils/handlers/flag_value.hpp"
+#include "src/utils/handlers/flag_set.hpp"
 #include <iostream>
 #include <filesystem>
 #include <string>
@@ -9,9 +9,9 @@ namespace fs = filesystem;
 
 struct MkdirOptions
 {
-    bool parents = false; // -p : create parent dirs
-    bool verbose = false; // -v : print a message for each created directory
-    string mode = "";     // -m : octal permission bits (e.g. "755")
+    bool parents = false;
+    bool verbose = false;
+    string mode;
 };
 
 // Converts "755" → fs::perms via stoi with base 8.
@@ -71,16 +71,19 @@ int handleMkdir(const ParsedInput &parsed, ShellState &state)
         return state.recordCommandExitCode(1);
     }
 
+    FlagSet flags(MKDIR_FLAGS);
+    flags.parse(parsed);
+
     MkdirOptions opts;
-    opts.parents = hasFlag(parsed, 'p', "parents");
-    opts.verbose = hasFlag(parsed, 'v', "verbose");
-    opts.mode = getFlagValue(parsed.rawArgs, 'm', "mode");
+    opts.parents = flags.has('p');
+    opts.verbose = flags.has('v');
+    opts.mode    = flags.value('m');
 
     int exitCode = 0;
 
     for (const string &target : parsed.files)
     {
-        if (!opts.mode.empty() && target == opts.mode)
+        if (flags.isValueToken(target))
             continue;
 
         fs::path resolved = resolvePath(target);
