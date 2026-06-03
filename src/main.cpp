@@ -5,6 +5,7 @@
 #include "utils/executors/executor.hpp"
 #include "utils/shell_state/shell_state.hpp"
 #include "utils/handlers/input_handler.hpp"
+#include "commands/handlers/builtins/exit.hpp"
 #include "utils/pipe/pipe_utils.hpp"
 #include "utils/pipe/pipe_runner.hpp"
 using namespace std;
@@ -48,7 +49,7 @@ int main()
             cmd = it->second;
 
         if (cmd == Command::EXIT)
-            return 0;
+            handleExit(parsed, state);
 
         if (cmd == Command::UNKNOWN)
             executeExternalCommand(parsed.command, parsed.rawArgs);
