@@ -23,6 +23,20 @@ static bool confirmRemoval(const string &path)
     return !answer.empty() && (answer[0] == 'y' || answer[0] == 'Y');
 }
 
+static bool forceRemoveAll(const fs::path &path)
+{
+    error_code ec;
+    // Strip read-only from all entries so Windows allows deletion
+    if (fs::is_directory(path, ec))
+    {
+        for (auto &entry : fs::recursive_directory_iterator(path, fs::directory_options::skip_permission_denied, ec))
+            fs::permissions(entry.path(), fs::perms::owner_write, fs::perm_options::add, ec);
+    }
+    fs::permissions(path, fs::perms::owner_write, fs::perm_options::add, ec);
+    fs::remove_all(path, ec);
+    return !ec;
+}
+
 static bool removeEntry(const fs::path &path, const string &original, const RmOptions &opts)
 {
     error_code ec;
@@ -47,14 +61,21 @@ static bool removeEntry(const fs::path &path, const string &original, const RmOp
         return true; // skipping is not an error
 
     if (opts.recursive && fs::is_directory(path, ec))
-        fs::remove_all(path, ec);
-    else
-        fs::remove(path, ec);
-
-    if (ec)
     {
-        cerr << "rm: cannot remove '" << original << "': " << ec.message() << "\n";
-        return false;
+        if (!forceRemoveAll(path))
+        {
+            cerr << "rm: cannot remove '" << original << "': Access denied\n";
+            return false;
+        }
+    }
+    else
+    {
+        fs::remove(path, ec);
+        if (ec)
+        {
+            cerr << "rm: cannot remove '" << original << "': " << ec.message() << "\n";
+            return false;
+        }
     }
 
     if (opts.verbose)
