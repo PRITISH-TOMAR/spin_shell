@@ -23,6 +23,7 @@ enum class Command {
     GREP,
     MKDIR,
     RM,
+    RMDIR,
     CP,
     MV,
     TOUCH,
