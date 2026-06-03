@@ -47,10 +47,16 @@ inline const vector<FlagDef> RMDIR_FLAGS = {
     {'v', "verbose", FlagKind::Bool},  // print message for each removed directory
 };
 
+inline const vector<FlagDef> HISTORY_FLAGS = {
+    {'c', "", FlagKind::Bool},   // clear history
+    {'d', "", FlagKind::Value},  // delete entry at offset (1-based)
+};
+
 // Parses a command's declared flags from ParsedInput.
 // Construct with a named flag set from the registry above, then call parse().
 class FlagSet {
 public:
+    // explicit: prevents accidental implicit conversion from vector<FlagDef> to FlagSet
     explicit FlagSet(const vector<FlagDef>& defs) : defs_(defs) {}
 
     void parse(const ParsedInput& parsed) {

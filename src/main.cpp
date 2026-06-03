@@ -36,6 +36,8 @@ int main()
             continue;
         }
 
+        state.commandHistory.push_back(input);
+
         ParsedInput parsed;
         if (prepareInputForDispatch(input, state, parsed))
             continue;
