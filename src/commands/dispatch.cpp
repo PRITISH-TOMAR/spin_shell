@@ -9,6 +9,7 @@
 #include "src/commands/handlers/tools/rm.hpp"
 #include "src/commands/handlers/tools/rmdir.hpp"
 #include "src/commands/handlers/builtins/history.hpp"
+#include "src/commands/handlers/tools/clear.hpp"
 
 
 int dispatchCommand(Command cmd, const ParsedInput& parsed, ShellState& state)
@@ -30,7 +31,7 @@ int dispatchCommand(Command cmd, const ParsedInput& parsed, ShellState& state)
     // case Command::CP:      return handleCp(parsed, state);
     // case Command::MV:      return handleMv(parsed, state);
     case Command::TOUCH:   return handleTouch(parsed, state);
-    // case Command::CLEAR:   return handleClear(parsed, state);
+    case Command::CLEAR:   return handleClear(parsed, state);
     case Command::HISTORY: return handleHistory(parsed, state);
     // case Command::HELP:    return handleHelp(parsed, state);
 
