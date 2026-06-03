@@ -1,13 +1,11 @@
 #include "dispatch.hpp"
-
-// All handler includes live here — this is the only file that needs them.
-// Add a new #include + case whenever a new command is implemented.
 #include "src/commands/handlers/tools/cat.hpp"
 #include "src/commands/handlers/tools/ls.hpp"
 #include "src/commands/handlers/tools/echo.hpp"
 #include "src/commands/handlers/builtins/cd.hpp"
 #include "src/commands/handlers/builtins/pwd.hpp"
 #include "src/commands/handlers/tools/mkdir.hpp"
+#include "src/commands/handlers/tools/touch.hpp"
 
 
 int dispatchCommand(Command cmd, const ParsedInput& parsed, ShellState& state)
@@ -27,7 +25,7 @@ int dispatchCommand(Command cmd, const ParsedInput& parsed, ShellState& state)
     // case Command::RM:      return handleRm(parsed, state);
     // case Command::CP:      return handleCp(parsed, state);
     // case Command::MV:      return handleMv(parsed, state);
-    // case Command::TOUCH:   return handleTouch(parsed, state);
+    case Command::TOUCH:   return handleTouch(parsed, state);
     // case Command::CLEAR:   return handleClear(parsed, state);
     // case Command::HISTORY: return handleHistory(parsed, state);
     // case Command::HELP:    return handleHelp(parsed, state);
