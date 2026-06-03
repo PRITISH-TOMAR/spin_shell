@@ -35,6 +35,12 @@ inline const vector<FlagDef> MKDIR_FLAGS = {
     {'m', "mode",    FlagKind::Value},  // octal permission bits e.g. "755"
 };
 
+inline const vector<FlagDef> RM_FLAGS = {
+    {'r', "recursive", FlagKind::Bool},  // remove directories and their contents recursively
+    {'f', "force",     FlagKind::Bool},  // ignore nonexistent files and arguments, never prompt
+    {'i', "interactive", FlagKind::Bool},  // prompt before every removal
+    {'v', "verbose",     FlagKind::Bool},  // print message for each removed file
+};
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Parses a command's declared flags from ParsedInput.
