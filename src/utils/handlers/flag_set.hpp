@@ -41,7 +41,11 @@ inline const vector<FlagDef> RM_FLAGS = {
     {'i', "interactive", FlagKind::Bool},  // prompt before every removal
     {'v', "verbose",     FlagKind::Bool},  // print message for each removed file
 };
-// ─────────────────────────────────────────────────────────────────────────────
+
+inline const vector<FlagDef> RMDIR_FLAGS = {
+    {'p', "parents", FlagKind::Bool},  // remove path components, each must be empty
+    {'v', "verbose", FlagKind::Bool},  // print message for each removed directory
+};
 
 // Parses a command's declared flags from ParsedInput.
 // Construct with a named flag set from the registry above, then call parse().
