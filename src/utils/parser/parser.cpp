@@ -1,74 +1,55 @@
 #include "parser.hpp"
-#include <sstream>
 
 ParsedInput parseInput(const string &input)
 {
     ParsedInput parsed;
-    istringstream stream(input);
-    string token;
+    size_t i = 0, n = input.size();
+    bool first = true;
 
-    if (!(stream >> parsed.command))
-    {
-        return parsed; // Return empty if no command is found
-    }
+    while (i < n) {
+        while (i < n && isspace((unsigned char)input[i])) ++i;
+        if (i >= n) break;
 
-    while (stream >> token)
-    {
+        string token;
+        while (i < n && !isspace((unsigned char)input[i])) {
+            char c = input[i];
+            if (c == '\'' || c == '"') {
+                ++i;
+                while (i < n && input[i] != c) token += input[i++];
+                if (i < n) ++i;
+            } else {
+                token += c; ++i;
+            }
+        }
+
+        if (first) { parsed.command = token; first = false; continue; }
+
         parsed.rawArgs.push_back(token);
 
-        if (token.size() > 1 && token[0] == '-' && token[1] != '-')
-        {
-            for (size_t i = 1; i < token.size(); i++)
-                parsed.shortFlags[token[i]] = true;
-        }
-        else if (token.size() > 2 && token.substr(0, 2) == "--")
-        {
+        if (token.size() > 1 && token[0] == '-' && token[1] != '-') {
+            for (size_t j = 1; j < token.size(); j++)
+                parsed.shortFlags[token[j]] = true;
+        } else if (token.size() > 2 && token.substr(0, 2) == "--") {
             parsed.longFlags[token.substr(2)] = true;
-        }
-        else
-        {
+        } else {
             parsed.files.push_back(token);
         }
     }
     return parsed;
 }
 
-// input: "cat -nb --number file.txt ../other.txt"
-//            │
-//            ▼
-// stream >> token  →  command = "cat"
-//            │
-//            ▼
-// stream >> token  →  token = "-nb"
-//     token[0] = '-', token[1] = 'n' (not '-')  →  SHORT FLAG
-//     loop: shortFlags['n']=true, shortFlags['b']=true
-//            │
-//            ▼
-// stream >> token  →  token = "--number"
-//     token[0] = '-', token[1] = '-'  →  LONG FLAG
-//     substr(2) → longFlags["number"]=true
-//            │
-//            ▼
-// stream >> token  →  token = "file.txt"
-//     doesn't start with '-'  →  FILE
-//     files = ["file.txt"]
-//            │
-//            ▼
-// stream >> token  →  token = "../other.txt"
-//     doesn't start with '-'  →  FILE
-//     files = ["file.txt", "../other.txt"]
-//            │
-//            ▼
-// stream exhausted → loop ends
-
-
+// input: "grep 'hello world' -i --count file.txt"
+//
+// tokenize() → ["grep", "hello world", "-i", "--count", "file.txt"]
+//                              ↑ quotes stripped, space preserved
+//
 // Final ParsedInput:
 // {
-//     command    = "cat"
-//     rawArgs    = ["-nb", "--number", "file.txt", "../other.txt"]
-//     shortFlags = { 'n':true, 'b':true }
-//     longFlags  = { "number":true }
-//     files      = ["file.txt", "../other.txt"]
+//     command    = "grep"
+//     rawArgs    = ["hello world", "-i", "--count", "file.txt"]
+//     shortFlags = { 'i':true }
+//     longFlags  = { "count":true }
+//     files      = ["hello world", "file.txt"]
 // }
 
 
