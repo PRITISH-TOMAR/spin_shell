@@ -101,7 +101,9 @@ static string runSegment(const string &rawSegment, const string &inputBuf, bool 
         if (!isLast)
             savedCout = cout.rdbuf(outStream.rdbuf());
 
+        state.isPiped = !isLast;
         dispatchCommand(cmd, parsed, state);
+        state.isPiped = false;
 
         // Always restore cin
         cin.rdbuf(savedCin);

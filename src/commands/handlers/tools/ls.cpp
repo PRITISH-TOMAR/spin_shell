@@ -203,7 +203,7 @@ int handleLs(const ParsedInput &parsed, ShellState &state)
     opts.sortBySize = hasFlag(parsed, 'S', "");
     opts.reverse = hasFlag(parsed, 'r', "reverse");
     opts.recursive = hasFlag(parsed, 'R', "recursive");
-    opts.onePerLine = hasFlag(parsed, '1', "");
+    opts.onePerLine = hasFlag(parsed, '1', "") || state.isPiped;
     opts.dirItself = hasFlag(parsed, 'd', "directory");
 
     // Default target is current working directory when no paths are given
