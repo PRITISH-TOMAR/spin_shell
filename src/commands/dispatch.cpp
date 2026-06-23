@@ -14,6 +14,8 @@
 #include "src/commands/handlers/tools/cp.hpp"
 #include "src/commands/handlers/tools/mv.hpp"
 #include "src/commands/handlers/builtins/help.hpp"
+#include "src/commands/handlers/builtins/type.hpp"
+#include "src/commands/handlers/builtins/export.hpp"
 
 
 int dispatchCommand(Command cmd, const ParsedInput& parsed, ShellState& state)
@@ -37,6 +39,8 @@ int dispatchCommand(Command cmd, const ParsedInput& parsed, ShellState& state)
     case Command::CLEAR:   return handleClear(parsed, state);
     case Command::HISTORY: return handleHistory(parsed, state);
     case Command::HELP:    return handleHelp(parsed, state);
+    case Command::TYPE:    return handleType(parsed, state);
+    case Command::EXPORT:  return handleExport(parsed, state);
 
     default: return 0;
     }
