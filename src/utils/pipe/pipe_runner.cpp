@@ -40,6 +40,14 @@ void runPipeline(const vector<string> &segments, ShellState &state)
     // inputBuf threads through the loop.
 
     string inputBuf;
+    int lastNonEmpty = -1;
+
+    for (int i = (int)segments.size() - 1; i >= 0; --i)
+        if (segments[i].find_first_not_of(" \t") != string::npos)
+        {
+            lastNonEmpty = i;
+            break;
+        }
 
     for (size_t i = 0; i < segments.size(); i++)
     {
@@ -53,7 +61,7 @@ void runPipeline(const vector<string> &segments, ShellState &state)
 
         segment = segment.substr(start, end - start + 1);
 
-        bool isLast = (i == segments.size() - 1);
+        bool isLast = (int(i) == lastNonEmpty);
 
         // run segment :: inputBuf is replace by its stdOut or "" if last
         inputBuf = runSegment(segment, inputBuf, isLast, state);
