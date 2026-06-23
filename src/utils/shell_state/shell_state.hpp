@@ -9,6 +9,7 @@ using namespace std;
 struct ShellState
 {
     int lastExitCode;
+    bool isPiped = false;
     vector<string> commandHistory;
     string currentDirectory;
     string previousDirectory;
