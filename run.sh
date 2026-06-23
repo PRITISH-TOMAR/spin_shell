@@ -13,4 +13,8 @@ cmake -B build -S .
 cmake --build build
 
 # Run the shell
-exec ./build/shell "$@"
+if [ -f ./build/shell.exe ]; then
+    exec ./build/shell.exe "$@"
+else
+    exec ./build/shell "$@"
+fi
