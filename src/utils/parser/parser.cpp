@@ -11,6 +11,7 @@ ParsedInput parseInput(const string &input)
         if (i >= n) break;
 
         string token;
+        bool hasUnquotedGlob = false;
         while (i < n && !isspace((unsigned char)input[i])) {
             char c = input[i];
             if (c == '\'' || c == '"') {
@@ -18,6 +19,7 @@ ParsedInput parseInput(const string &input)
                 while (i < n && input[i] != c) token += input[i++];
                 if (i < n) ++i;
             } else {
+                if (c == '*' || c == '?' || c == '[') hasUnquotedGlob = true;
                 token += c; ++i;
             }
         }
@@ -25,6 +27,7 @@ ParsedInput parseInput(const string &input)
         if (first) { parsed.command = token; first = false; continue; }
 
         parsed.rawArgs.push_back(token);
+        parsed.rawArgsHasGlob.push_back(hasUnquotedGlob);
 
         if (token.size() > 1 && token[0] == '-' && token[1] != '-') {
             for (size_t j = 1; j < token.size(); j++)
