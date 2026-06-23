@@ -18,6 +18,17 @@ struct GrepOptions {
     bool invert     = false;
 };
 
+// Escapes all regex metacharacters so the pattern is treated as a literal string.
+static string regexEscape(const string& s) {
+    static const string meta = R"(\.^$*+?()[]{}|)";
+    string result;
+    for (char c : s) {
+        if (meta.find(c) != string::npos) result += '\\';
+        result += c;
+    }
+    return result;
+}
+
 static bool grepStream(istream& in, const regex& re, const string& label,
                        bool printLabel, const GrepOptions& opts)
 {
@@ -111,9 +122,9 @@ int handleGrep(const ParsedInput& parsed, ShellState& state) {
     regex re;
     try {
         re = regex(pattern, reFlags);
-    } catch (const regex_error& e) {
-        cerr << "grep: invalid pattern '" << pattern << "': " << e.what() << "\n";
-        return state.recordCommandExitCode(2);
+    } catch (const regex_error&) {
+        // Pattern is not valid regex — fall back to literal string match
+        re = regex(regexEscape(pattern), reFlags);
     }
 
     bool found = false;
