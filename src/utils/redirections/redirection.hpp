@@ -9,7 +9,7 @@ enum class RedirectionType{
     STDOUT_OVERWRITE, // >,
     STDOUT_APPEND, // >>,
     STDIN_FILE, // <,
-    STDER_FILE, // 2>,
+    STDERR_FILE, // 2>,
     STDERR_TO_STDOUT, //2>&1,
     BOTH_FILE, // &>,
 };

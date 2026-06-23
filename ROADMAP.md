@@ -2,7 +2,7 @@
 
 ## Pending
 
-### pipe `|` ⬅ PRIORITY 1
+### pipe `|`
 
 #### Concept
 A pipe connects the **stdout of one command to the stdin of the next**.
@@ -89,76 +89,95 @@ fork()
 - [x] Wire `containsPipe` + `runPipeline` into `main.cpp` REPL loop
 - [x] Windows: `CreateProcess`-based external segment runner
 - [x] Linux: `fork()`+`dup2()`+`pipe()` external segment runner
-- [ ] Handle all edge cases above
+- [x] Handle all edge cases above
 
 
 ### ls
-- [ ] Default to `ShellState.currentDirectory` when no path arg given
-- [ ] Support `-a` flag (show hidden files)
-- [ ] Support `-l` flag (long listing format)
-- [ ] Support `-la` / `-al` combined flags
+- [x] Default to `ShellState.currentDirectory` when no path arg given
+- [x] Support `-a` flag (show hidden files)
+- [x] Support `-l` flag (long listing format)
+- [x] Support `-la` / `-al` combined flags
 - [ ] Colorize output: directories, executables, regular files
 
 ### mkdir
-- [ ] Support single dir creation
-- [ ] Support `-p` flag (create parent dirs recursively)
-- [ ] Error on existing dir unless `-p` is passed
+- [x] Support single dir creation
+- [x] Support `-p` flag (create parent dirs recursively)
+- [x] Error on existing dir unless `-p` is passed
 
 ### touch
-- [ ] Create file if it does not exist
-- [ ] Update access and modification timestamps if file exists
-- [ ] Support multiple file arguments
+- [x] Create file if it does not exist
+- [x] Update access and modification timestamps if file exists
+- [x] Support multiple file arguments
 
 ### rm
-- [ ] Remove one or more files
-- [ ] Support `-r` / `-rf` flag for recursive directory removal
-- [ ] Support `-f` flag to suppress errors on missing files
+- [x] Remove one or more files
+- [x] Support `-r` / `-rf` flag for recursive directory removal
+- [x] Support `-f` flag to suppress errors on missing files
 
 ### rmdir
-- [ ] Remove empty directories
-- [ ] Error if directory is not empty (suggest `rm -r` instead)
-- [ ] Support multiple directory arguments
+- [x] Remove empty directories
+- [x] Error if directory is not empty (suggest `rm -r` instead)
+- [x] Support multiple directory arguments
 
 ### history
-- [ ] Store every executed command in `ShellState.commandHistory`
-- [ ] `history` prints all entries with line numbers
-- [ ] `history N` prints last N entries
-- [ ] Hook into `prepareInputForDispatch` to record each command before dispatch
+- [x] Store every executed command in `ShellState.commandHistory`
+- [x] `history` prints all entries with line numbers
+- [x] `history N` prints last N entries
+- [x] Hook into REPL loop to record each command before dispatch
 
 ### exit
-- [ ] `exit` with no args exits with code 0
-- [ ] `exit N` exits with code N
-- [ ] Set `ShellState.lastExitCode` before returning
+- [x] `exit` with no args exits with code 0
+- [x] `exit N` exits with code N
+- [x] Set `ShellState.lastExitCode` before returning
 
 ### help
-- [ ] List all known built-in commands
-- [ ] Brief description per command
+- [x] List all known built-in commands
+- [x] Brief description per command
 
 ### clear
-- [ ] Output ANSI escape code `\033[2J\033[H` to clear terminal
-- [ ] Works cross-platform (ANSI supported on Windows 10+)
+- [x] Output ANSI escape code `\033[2J\033[H` to clear terminal
+- [x] Works cross-platform (ANSI supported on Windows 10+)
 
 ### cp
-- [ ] Copy a file to a destination file or directory
-- [ ] Support `-r` flag for recursive directory copy
-- [ ] Preserve source filename when destination is a directory
+- [x] Copy a file to a destination file or directory
+- [x] Support `-r` flag for recursive directory copy
+- [x] Preserve source filename when destination is a directory
 
 ### mv
-- [ ] Move/rename a file or directory
-- [ ] Error if source does not exist
-- [ ] Overwrite destination by default; support `-n` to skip if exists
+- [x] Move/rename a file or directory
+- [x] Error if source does not exist
+- [x] Overwrite destination by default; support `-n` to skip if exists
 
 ### echo
-- [ ] Print arguments separated by spaces followed by newline
-- [ ] Support `-n` flag to suppress trailing newline
-- [ ] Expand shell variables (`$VAR`, `$?`) already handled upstream by `ShellState`
+- [x] Print arguments separated by spaces followed by newline
+- [x] Support `-n` flag to suppress trailing newline
+- [x] Expand shell variables (`$VAR`, `$?`) already handled upstream by `ShellState`
 
 ### grep
-- [ ] Search for a pattern in one or more files
-- [ ] Support `-i` flag (case-insensitive)
-- [ ] Support `-n` flag (print line numbers)
-- [ ] Support `-r` flag (recursive directory search)
-- [ ] Read from stdin when no file argument is given
+- [x] Search for a pattern in one or more files
+- [x] Support `-i` flag (case-insensitive)
+- [x] Support `-n` flag (print line numbers)
+- [x] Support `-r` flag (recursive directory search)
+- [x] Read from stdin when no file argument is given
+
+### type
+- [x] Identify shell builtins vs external executables
+- [x] Print `name is a shell builtin` for known commands
+- [x] Print `name is /path/to/exe` for commands found in `$PATH`
+- [x] Print error and exit 1 for unknown commands
+- [x] Support multiple arguments
+
+### export
+- [x] `export VAR=val` — set shell variable and promote to environment
+- [x] `export VAR` — promote an already-defined shell variable to environment
+- [x] `export` with no args — list all shell variables (`declare -x` format)
+
+### glob expansion
+- [x] Expand unquoted `*` and `?` in arguments against the current directory
+- [x] Sort matches alphabetically
+- [x] Keep literal token when no matches found (nullglob-off behaviour)
+- [x] Skip hidden files (names starting with `.`) in expansion
+- [ ] Support `[...]` character-class patterns
 
 ---
 
@@ -188,7 +207,8 @@ fork()
 - [ ] `${VAR:-default}` — default value if unset
 - [ ] `$(cmd)` — command substitution
 - [ ] `$((expr))` — arithmetic expansion
-- [ ] `*`, `?`, `[...]` — glob/wildcard expansion in args
+- [x] `*`, `?` — glob/wildcard expansion in unquoted args
+- [ ] `[...]` — character-class glob patterns
 
 ### Phase 6 — Readline / Interactive UX
 - [ ] Arrow key history navigation (up/down)
@@ -210,7 +230,8 @@ fork()
 - [ ] `Ctrl+C` / `Ctrl+Z` signal handling (`SIGINT`, `SIGTSTP`)
 
 ### Phase 9 — Environment & Aliases
-- [ ] `export VAR=val` — promote shell var to environment variable
+- [x] `export VAR=val` — promote shell var to environment variable
+- [x] `export VAR` — promote already-defined shell var to environment
 - [ ] `unset VAR` — remove a variable
 - [ ] `env` — print all environment variables
 - [ ] `alias` / `unalias` — define and remove command aliases
