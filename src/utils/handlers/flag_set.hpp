@@ -52,6 +52,29 @@ inline const vector<FlagDef> HISTORY_FLAGS = {
     {'d', "", FlagKind::Value},  // delete entry at offset (1-based)
 };
 
+inline const vector<FlagDef> CP_FLAGS = {
+    {'r', "recursive",  FlagKind::Bool},  // copy directories recursively
+    {'R', "",           FlagKind::Bool},  // alias for -r
+    {'n', "no-clobber", FlagKind::Bool},  // skip if destination exists
+    {'v', "verbose",    FlagKind::Bool},  // print each file copied
+};
+
+inline const vector<FlagDef> MV_FLAGS = {
+    {'n', "no-clobber", FlagKind::Bool},  // skip if destination exists
+    {'v', "verbose",    FlagKind::Bool},  // print each file moved
+    {'f', "force",      FlagKind::Bool},  // do not prompt before overwriting
+};
+
+inline const vector<FlagDef> GREP_FLAGS = {
+    {'i', "ignore-case",        FlagKind::Bool},  // case-insensitive search
+    {'n', "line-number",        FlagKind::Bool},  // prefix each line with line number
+    {'r', "recursive",          FlagKind::Bool},  // recursive directory search
+    {'R', "",                   FlagKind::Bool},  // alias for -r
+    {'l', "files-with-matches", FlagKind::Bool},  // only print filenames with matches
+    {'c', "count",              FlagKind::Bool},  // only print match count per file
+    {'v', "invert-match",       FlagKind::Bool},  // select non-matching lines
+};
+
 // Parses a command's declared flags from ParsedInput.
 // Construct with a named flag set from the registry above, then call parse().
 class FlagSet {
