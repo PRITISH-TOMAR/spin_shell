@@ -1,29 +1,24 @@
 #include "pipe_utils.hpp"
-
+#include "src/utils/quote_utils.hpp"
 
 vector<string> splitOnPipe(const string &input)
 {
-
     vector<string> segments;
     string current;
-    bool inSingleQuote = false;
-    bool inDoubleQuote = false;
+    QuoteTracker qt;
 
-    for (size_t i = 0; i < input.size(); i++)
+    for (char c : input)
     {
-        char c = input[i];
-
-        if (c == '\'' && !inDoubleQuote)
-            inSingleQuote = !inSingleQuote;
-        else if (c == '\"' && !inSingleQuote)
-            inDoubleQuote = !inDoubleQuote;
-        else if (c == '|' && !inSingleQuote && !inDoubleQuote)
+        qt.update(c);
+        if (c == '|' && !qt.inQuotes())
         {
             segments.push_back(current);
             current.clear();
-            continue;
         }
-        current += c;
+        else
+        {
+            current += c;
+        }
     }
     segments.push_back(current);
     return segments;
@@ -31,15 +26,11 @@ vector<string> splitOnPipe(const string &input)
 
 bool containsPipe(const string &input)
 {
-
-    bool inSingle = false, inDouble = false;
+    QuoteTracker qt;
     for (char c : input)
     {
-        if (c == '\'' && !inDouble)
-            inSingle = !inSingle;
-        else if (c == '"' && !inSingle)
-            inDouble = !inDouble;
-        else if (c == '|' && !inSingle && !inDouble)
+        qt.update(c);
+        if (c == '|' && !qt.inQuotes())
             return true;
     }
     return false;
