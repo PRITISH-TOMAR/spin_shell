@@ -51,10 +51,11 @@ static bool validatePath(const fs::path& resolved, const string& original){
 
 int handleCat(const ParsedInput& parsed, ShellState &state){
 
-    if(parsed.rawArgs.empty() || parsed.files.empty()){
-        cerr << "cat: missing file operand\n";
-        cerr << "Usage: cat [OPTION]... [FILE]...\n";
-        return state.recordCommandExitCode(1);
+    if(parsed.files.empty()){
+        string line;
+        while(getline(cin, line))
+            cout << line << "\n";
+        return state.recordCommandExitCode(0);
     }
 
     bool numberAllLines = hasFlag(parsed, 'n', "number");
