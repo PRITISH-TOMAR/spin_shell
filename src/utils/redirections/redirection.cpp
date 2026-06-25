@@ -1,5 +1,5 @@
-#include <redirection.hpp>
-#include <src/utils/quote_utils.hpp>
+#include "redirection.hpp"
+#include "src/utils/quote_utils.hpp"
 
 #include <cctype>
 #include <cstring>

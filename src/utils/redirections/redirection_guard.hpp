@@ -3,6 +3,8 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
+#include <sstream>
+#include <memory>
 
 using namespace std;
 
@@ -13,7 +15,7 @@ struct RedirectionGuard
     streambuf *savedCerr = nullptr;
     ofstream outFile;
     ofstream errFile;
-    ofstream inFile;
+    unique_ptr<istringstream> inBuf;
 
     void apply(const vector<Redirection> &redirections)
     {
@@ -29,10 +31,18 @@ struct RedirectionGuard
                 outFile.open(r.file, ios::out | ios::app);
                 savedCout = cout.rdbuf(outFile.rdbuf());
                 break;
-            case RedirectionType::STDIN_FILE:
-                inFile.open(r.file);
-                savedCin = cin.rdbuf(inFile.rdbuf());
+            case RedirectionType::STDIN_FILE: {
+                ifstream f(r.file);
+                if (f.is_open()) {
+                    ostringstream oss;
+                    oss << f.rdbuf();
+                    inBuf = make_unique<istringstream>(oss.str());
+                    savedCin = cin.rdbuf(inBuf->rdbuf());
+                } else {
+                    cerr << "bash: " << r.file << ": No such file or directory\n";
+                }
                 break;
+            }
             case RedirectionType::STDERR_FILE:
                 errFile.open(r.file, ios::out | ios::trunc);
                 savedCerr = cerr.rdbuf(errFile.rdbuf());
@@ -70,8 +80,7 @@ struct RedirectionGuard
             outFile.close();
         if (errFile.is_open())
             errFile.close();
-        if (inFile.is_open())
-            inFile.close();
+        inBuf.reset();
     }
 
     ~RedirectionGuard()
