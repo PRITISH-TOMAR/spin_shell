@@ -8,6 +8,8 @@
 #include "commands/handlers/builtins/exit.hpp"
 #include "utils/pipe/pipe_utils.hpp"
 #include "utils/pipe/pipe_runner.hpp"
+#include "utils/redirections/redirection_guard.hpp"
+
 using namespace std;
 
 int main()
@@ -50,6 +52,9 @@ int main()
 
         if (cmd == Command::EXIT)
             handleExit(parsed, state);
+
+        RedirectionGuard guard;
+        guard.apply(parsed.redirections);
 
         if (cmd == Command::UNKNOWN)
             executeExternalCommand(parsed.command, parsed.rawArgs);
