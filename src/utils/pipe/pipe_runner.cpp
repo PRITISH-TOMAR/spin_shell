@@ -13,6 +13,7 @@
 #include "src/utils/handlers/input_handler.hpp"
 #include "src/utils/findInPath.hpp"
 #include "src/commands/dispatch.hpp"
+#include "src/utils/redirections/redirection_guard.hpp"
 
 #include <sstream>
 #include <iostream>
@@ -97,30 +98,30 @@ static string runSegment(const string &rawSegment, const string &inputBuf, bool 
     if (cmd != Command::UNKNOWN)
     {
 
-        // feed inputBuf (input) into the handler as if it is a normal stdin
         istringstream inStream(inputBuf);
+      streambuf *savedCin = cin.rdbuf(inStream.rdbuf());
 
-        streambuf *savedCin = cin.rdbuf(inStream.rdbuf());
+      ostringstream outStream;
+      streambuf *savedCout = nullptr;
 
-        ostringstream outStream;
+      if (!isLast)
+          savedCout = cout.rdbuf(outStream.rdbuf());
 
-        streambuf *savedCout = nullptr;
+      RedirectionGuard guard;
+      if (isLast) guard.apply(parsed.redirections);
 
-        if (!isLast)
-            savedCout = cout.rdbuf(outStream.rdbuf());
+      state.isPiped = !isLast;
+      dispatchCommand(cmd, parsed, state);
+      state.isPiped = false;
 
-        state.isPiped = !isLast;
-        dispatchCommand(cmd, parsed, state);
-        state.isPiped = false;
+      cin.rdbuf(savedCin);
 
-        // Always restore cin
-        cin.rdbuf(savedCin);
+      if (!isLast)
+      {
+          cout.rdbuf(savedCout);
+          return outStream.str();
+      }
 
-        if (!isLast)
-        {
-            cout.rdbuf(savedCout);  // restore real cout
-            return outStream.str(); // output before next input
-        }
 
         return ""; // last Segment direct write to terminal
     }
