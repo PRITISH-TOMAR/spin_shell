@@ -111,7 +111,7 @@ bool prepareInputForDispatch(string &input, ShellState &state, ParsedInput &out)
     state.expandShellVariablesInPlace(input);
 
     vector<Redirection> redirections;
-    parseRedirections(input, out.redirections);
+    parseRedirections(input, redirections);
 
     out = parseInput(input);
     out.redirections = move(redirections);
