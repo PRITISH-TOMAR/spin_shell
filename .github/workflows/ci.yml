@@ -96,7 +96,7 @@ jobs:
       # restore-keys: fallback to most recent cache for this OS (partial hit still helps)
       - name: Restore ccache
         if: "!matrix.msys2"
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ccache
           key: ccache-${{ matrix.os }}-${{ hashFiles('CMakeLists.txt', 'src/**') }}
