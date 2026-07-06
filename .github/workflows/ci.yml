@@ -128,7 +128,7 @@ jobs:
       # if-no-files-found: error  → fails the job if binary is missing (catches silent build failures)
       # retention-days: 7         → auto-deleted after a week (not a permanent release artifact)
       - name: Upload binary artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: shell-${{ matrix.os }}
           path: build/${{ matrix.artifact }}
