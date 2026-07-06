@@ -25,10 +25,7 @@ int main()
         cout << state.getPrompt();
 
         if (!getline(cin, input))
-        {
-            cout << "EOF \n";
-            break;
-        }
+            return state.lastExitCode;
         if (input.empty())
             continue;
 
@@ -57,7 +54,7 @@ int main()
         guard.apply(parsed.redirections);
 
         if (cmd == Command::UNKNOWN)
-            executeExternalCommand(parsed.command, parsed.rawArgs);
+            state.recordCommandExitCode(executeExternalCommand(parsed.command, parsed.rawArgs));
         else
             dispatchCommand(cmd, parsed, state);
     }
