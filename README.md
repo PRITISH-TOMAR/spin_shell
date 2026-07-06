@@ -44,6 +44,22 @@ copy shell-windows-x64.exe "$env:USERPROFILE\bin\shell.exe"
 # Then add %USERPROFILE%\bin to your PATH via System Properties → Environment Variables
 ```
 
+### Add to Windows Terminal
+
+Run in **PowerShell**:
+
+```powershell
+iwr https://github.com/PRITISH-TOMAR/spin_shell/releases/latest/download/shell-windows-x64.exe -OutFile "$env:USERPROFILE\shell.exe"
+$f = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
+$c = Get-Content $f -Raw | ConvertFrom-Json
+$c.profiles.list += [pscustomobject]@{ name="spin_shell"; guid="{a8f1c2d3-4e5b-6f7a-8b9c-0d1e2f3a4b5c}"; commandline="$env:USERPROFILE\shell.exe"; startingDirectory="%USERPROFILE%" }
+$c | ConvertTo-Json -Depth 10 | Set-Content $f
+```
+
+Reopen Windows Terminal — **spin_shell** appears in the dropdown.
+
+---
+
 ### Linux
 
 ```bash
