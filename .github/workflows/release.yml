@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"   # Triggers on any tag like v1.0.0, v2.1.3, etc.
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows (MinGW-w64)
+            os: windows-latest
+            artifact: shell.exe
+            asset_name: shell-windows-x64.exe
+            msys2: true
+
+          - name: Linux (GCC-13)
+            os: ubuntu-latest
+            artifact: shell
+            asset_name: shell-linux-x64
+            msys2: false
+
+          - name: macOS (Clang)
+            os: macos-latest
+            artifact: shell
+            asset_name: shell-macos-arm64
+            msys2: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Windows ──────────────────────────────────────────────────────────────
+      - name: Setup MSYS2 + MinGW-w64
+        if: matrix.msys2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          pacboy: >-
+            gcc:p
+            cmake:p
+            ninja:p
+
+      - name: Configure & build (Windows)
+        if: matrix.msys2
+        shell: msys2 {0}
+        run: |
+          cmake -G Ninja -B build -S . -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel
+
+      # ── Linux ─────────────────────────────────────────────────────────────────
+      - name: Install GCC-13
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y gcc-13 g++-13
+          sudo update-alternatives \
+            --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 \
+            --slave   /usr/bin/g++ g++ /usr/bin/g++-13
+
+      # ── Linux / macOS build ───────────────────────────────────────────────────
+      - name: Configure & build (Linux / macOS)
+        if: "!matrix.msys2"
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel
+
+      # ── Rename binary to platform-specific name ───────────────────────────────
+      - name: Rename artifact
+        if: matrix.msys2
+        shell: msys2 {0}
+        run: cp build/${{ matrix.artifact }} ${{ matrix.asset_name }}
+
+      - name: Rename artifact (Linux / macOS)
+        if: "!matrix.msys2"
+        run: cp build/${{ matrix.artifact }} ${{ matrix.asset_name }}
+
+      # ── Upload to share between jobs ──────────────────────────────────────────
+      - name: Upload binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.asset_name }}
+          if-no-files-found: error
+
+  release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    needs: build   # Wait for all 3 builds to finish
+
+    permissions:
+      contents: write   # Required to create a GitHub Release
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Download all 3 binaries produced by the build jobs
+      - name: Download all binaries
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+
+      # Flatten the directory — download-artifact puts each in its own subdir
+      - name: Flatten dist/
+        run: |
+          find dist/ -type f -exec mv {} dist/ \;
+          find dist/ -type d -empty -delete
+
+      # Generate sha256 checksums for all binaries
+      - name: Generate checksums
+        run: |
+          cd dist
+          sha256sum * > checksums.txt
+          cat checksums.txt
+
+      # Create the GitHub Release and upload all files
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/shell-windows-x64.exe
+            dist/shell-linux-x64
+            dist/shell-macos-arm64
+            dist/checksums.txt
+          generate_release_notes: true   # Auto-generates notes from commit messages
