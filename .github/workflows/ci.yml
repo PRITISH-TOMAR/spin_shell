@@ -9,45 +9,40 @@ on:
   workflow_dispatch:       # Adds a manual "Run workflow" button in the GitHub UI
 
 # Cancel any in-progress run for the same branch when a new push arrives
-# Prevents queue pile-up
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # ── 1. Build ────────────────────────────────────────────────────────────────
+  # Compiles on all 3 platforms in parallel and uploads the binary as an artifact
   build:
-    name: ${{ matrix.name }}   # Job label shown in GitHub UI (e.g. "Windows (MinGW-w64)")
-    runs-on: ${{ matrix.os }}  # Runner selected per matrix row
+    name: Build — ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
 
     strategy:
-      fail-fast: false  # If one platform fails, all other continues
+      fail-fast: false
       matrix:
         include:
-          # Windows
           - name: Windows (MinGW-w64)
             os: windows-latest
-            artifact: shell.exe 
-            msys2: true  # custom flag
+            artifact: shell.exe
+            msys2: true
 
-          # Linux: GCC-13 required
           - name: Linux (GCC-13)
             os: ubuntu-latest
             artifact: shell
             msys2: false
 
-          # macOS: Apple Clang (pre-installed, supports C++23)
           - name: macOS (Clang)
             os: macos-latest
             artifact: shell
             msys2: false
 
     steps:
-      # Clone the repo into the runner — always first
       - uses: actions/checkout@v4
 
       # ── Windows: MSYS2 + MinGW-w64 ──────────────────────────────────────────
-      # Sets up a full MinGW-w64 environment inside MSYS2
-      # :p is shorthand for the mingw-w64-x86_64- package prefix
       - name: Setup MSYS2 + MinGW-w64
         if: matrix.msys2
         uses: msys2/setup-msys2@v2
@@ -60,21 +55,7 @@ jobs:
             ninja:p
             ccache:p
 
-      # Build inside MSYS2 bash shell (required for MinGW toolchain to work)
-      # ccache wraps every g++ call to cache compiled object files
-      - name: Configure & build (Windows)
-        if: matrix.msys2
-        shell: msys2 {0}
-        env:
-          CCACHE_DIR: ${{ github.workspace }}/.ccache  # Store cache inside workspace so it persists
-        run: |
-          cmake -G Ninja -B build -S . \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache  # Route all g++ calls through ccache
-          cmake --build build --parallel            # Use all available CPU cores
-
-      # ── Linux: install GCC-13 ────────────────────────────────────────────────
-      # update-alternatives makes `gcc`/`g++` point to version 13 system-wide
+      # ── Linux: GCC-13 ────────────────────────────────────────────────────────
       - name: Install GCC-13
         if: runner.os == 'Linux'
         run: |
@@ -84,16 +65,12 @@ jobs:
             --install /usr/bin/gcc gcc /usr/bin/gcc-13 100 \
             --slave   /usr/bin/g++ g++ /usr/bin/g++-13
 
-      # ── macOS: install ccache ────────────────────────────────────────────────
-      # ccache is not pre-installed on macOS runners — grab it via Homebrew
+      # ── macOS: ccache ────────────────────────────────────────────────────────
       - name: Install ccache (macOS)
         if: runner.os == 'macOS'
         run: brew install ccache
 
       # ── Shared build cache (Linux / macOS) ──────────────────────────────────
-      # Saves and restores the ccache directory between workflow runs
-      # key: invalidated when CMakeLists.txt or any source file changes
-      # restore-keys: fallback to most recent cache for this OS (partial hit still helps)
       - name: Restore ccache
         if: "!matrix.msys2"
         uses: actions/cache@v4
@@ -102,7 +79,17 @@ jobs:
           key: ccache-${{ matrix.os }}-${{ hashFiles('CMakeLists.txt', 'src/**') }}
           restore-keys: ccache-${{ matrix.os }}-
 
-      # Standard CMake build for Linux and macOS — no special shell needed
+      - name: Configure & build (Windows)
+        if: matrix.msys2
+        shell: msys2 {0}
+        env:
+          CCACHE_DIR: ${{ github.workspace }}/.ccache
+        run: |
+          cmake -G Ninja -B build -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+          cmake --build build --parallel
+
       - name: Configure & build (Linux / macOS)
         if: "!matrix.msys2"
         run: |
@@ -111,26 +98,52 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           cmake --build build --parallel
 
-      # ── Smoke tests ──────────────────────────────────────────────────────────
-      # Split into two steps only because Windows needs `shell: msys2 {0}` for bash
-      # Both call the same script — passes the binary path as argument
-      - name: Smoke tests (Windows)
-        if: matrix.msys2
-        shell: msys2 {0}
-        run: bash tests/smoke.sh ./build/${{ matrix.artifact }}
-
-      - name: Smoke tests (Linux / macOS)
-        if: "!matrix.msys2"
-        run: bash tests/smoke.sh ./build/${{ matrix.artifact }}
-
-      # ── Upload binary ────────────────────────────────────────────────────────
-      # Makes the compiled binary downloadable from the Actions run page
-      # if-no-files-found: error  → fails the job if binary is missing (catches silent build failures)
-      # retention-days: 7         → auto-deleted after a week (not a permanent release artifact)
-      - name: Upload binary artifact
+      # Upload so the test job (and the Actions run page) can access it
+      - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
           name: shell-${{ matrix.os }}
           path: build/${{ matrix.artifact }}
           if-no-files-found: error
           retention-days: 7
+
+  # ── 2. Test ─────────────────────────────────────────────────────────────────
+  # Downloads each platform binary and runs smoke tests — no compiler needed
+  test:
+    name: Test — ${{ matrix.name }}
+    needs: build
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows (MinGW-w64)
+            os: windows-latest
+            artifact: shell.exe
+
+          - name: Linux (GCC-13)
+            os: ubuntu-latest
+            artifact: shell
+
+          - name: macOS (Clang)
+            os: macos-latest
+            artifact: shell
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download binary
+        uses: actions/download-artifact@v4
+        with:
+          name: shell-${{ matrix.os }}
+          path: build/
+
+      - name: Mark executable
+        if: runner.os != 'Windows'
+        run: chmod +x build/${{ matrix.artifact }}
+
+      # shell: bash works on all 3 platforms (Git Bash on Windows, native elsewhere)
+      - name: Smoke tests
+        shell: bash
+        run: bash tests/smoke.sh ./build/${{ matrix.artifact }}
