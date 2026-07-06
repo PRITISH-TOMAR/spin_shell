@@ -11,7 +11,7 @@
 #include <sys/wait.h>
 #endif
 
-void executeExternalCommand(const string &command, const vector<string> &rawArgs)
+int executeExternalCommand(const string &command, const vector<string> &rawArgs)
 {
 
     string path = findInPath(command);
@@ -19,7 +19,7 @@ void executeExternalCommand(const string &command, const vector<string> &rawArgs
     if (path.empty())
     {
         cout << command << ": command not found\n";
-        return;
+        return 127;
     }
     vector<const char *> argV;
     argV.push_back(command.c_str()); // convert to c string fmat
@@ -33,11 +33,7 @@ void executeExternalCommand(const string &command, const vector<string> &rawArgs
 #ifdef _WIN32
     // Windows-specific process creation
     int result = _spawnvp(_P_WAIT, path.c_str(), argV.data());
-
-    if (result != 0)
-    {
-        cerr << "Error occurred while executing command\n";
-    }
+    return (result < 0) ? 1 : result;
 #else
     //  Linux/Mac process creation
     pid_t pid = fork();
@@ -45,14 +41,13 @@ void executeExternalCommand(const string &command, const vector<string> &rawArgs
     if (pid < 0)
     {
         cerr << "Fork failed\n";
-        return;
+        return 1;
     }
 
     if (pid == 0)
     {
         // Child process
         execv(path.c_str(), const_cast<char *const *>(argV.data()));
-        // If execv returns, it means there was an error
         exit(1);
     }
     else
@@ -60,12 +55,7 @@ void executeExternalCommand(const string &command, const vector<string> &rawArgs
         // Parent process waits for child to finish
         int status;
         waitpid(pid, &status, 0);
-
-        if (WIFEXITED(status) && WEXITSTATUS(status) != 0)
-        {
-            cerr << "Error occurred while executing command\n"
-                 << WEXITSTATUS(status) << "\n";
-        }
+        return WIFEXITED(status) ? WEXITSTATUS(status) : 1;
     }
 #endif
 }

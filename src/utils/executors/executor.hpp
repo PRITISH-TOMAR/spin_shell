@@ -4,4 +4,4 @@
 
 using namespace std;
 
-void executeExternalCommand(const string &command, const vector<string> &args);
+int executeExternalCommand(const string &command, const vector<string> &args);
