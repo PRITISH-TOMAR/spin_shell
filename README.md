@@ -1,4 +1,4 @@
-# codecrafters-shell-cpp
+# spin_shell
 
 A POSIX-style shell built from scratch in C++23.
 
@@ -14,7 +14,72 @@ A POSIX-style shell built from scratch in C++23.
 
 ---
 
-## Installation
+## Download Pre-built Binary
+
+Pre-built binaries are available on the [Releases page](https://github.com/PRITISH-TOMAR/spin_shell/releases/latest).
+
+| Platform | File |
+|---|---|
+| Windows (x64) | `shell-windows-x64.exe` |
+| Linux (x64) | `shell-linux-x64` |
+| macOS (Apple Silicon) | `shell-macos-arm64` |
+
+A `checksums.txt` (SHA-256) is included with every release to verify integrity.
+
+### Windows
+
+```powershell
+# 1. Download shell-windows-x64.exe from the Releases page
+
+# 2. (Optional) Verify checksum — open PowerShell in the download folder
+Get-FileHash shell-windows-x64.exe -Algorithm SHA256
+
+# 3a. Run directly
+.\shell-windows-x64.exe
+
+# 3b. Or install system-wide: copy to a folder that is on your PATH
+#     Example using the user's local bin (no admin needed):
+mkdir "$env:USERPROFILE\bin" -Force
+copy shell-windows-x64.exe "$env:USERPROFILE\bin\shell.exe"
+# Then add %USERPROFILE%\bin to your PATH via System Properties → Environment Variables
+```
+
+### Linux
+
+```bash
+# 1. Download
+curl -Lo shell https://github.com/PRITISH-TOMAR/spin_shell/releases/latest/download/shell-linux-x64
+
+# 2. (Optional) Verify checksum
+curl -Lo checksums.txt https://github.com/PRITISH-TOMAR/spin_shell/releases/latest/download/checksums.txt
+sha256sum -c checksums.txt --ignore-missing
+
+# 3. Make executable and install
+chmod +x shell
+sudo mv shell /usr/local/bin/shell
+```
+
+### macOS
+
+```bash
+# 1. Download
+curl -Lo shell https://github.com/PRITISH-TOMAR/spin_shell/releases/latest/download/shell-macos-arm64
+
+# 2. (Optional) Verify checksum
+curl -Lo checksums.txt https://github.com/PRITISH-TOMAR/spin_shell/releases/latest/download/checksums.txt
+shasum -a 256 -c checksums.txt --ignore-missing
+
+# 3. Make executable and install
+chmod +x shell
+sudo mv shell /usr/local/bin/shell
+
+# 4. If macOS Gatekeeper blocks it (unsigned binary):
+xattr -d com.apple.quarantine /usr/local/bin/shell
+```
+
+---
+
+## Installation (Build from Source)
 
 ### Prerequisites
 
@@ -28,8 +93,8 @@ A POSIX-style shell built from scratch in C++23.
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/<your-username>/codecrafters-shell-cpp.git
-cd codecrafters-shell-cpp
+git clone https://github.com/PRITISH-TOMAR/spin_shell.git
+cd spin_shell
 
 # 2. Configure
 cmake -G "MinGW Makefiles" -B build -S .
@@ -50,8 +115,8 @@ bash run.sh
 ### Linux / macOS (GCC/Clang)
 
 ```bash
-git clone https://github.com/<your-username>/codecrafters-shell-cpp.git
-cd codecrafters-shell-cpp
+git clone https://github.com/PRITISH-TOMAR/spin_shell.git
+cd spin_shell
 
 cmake -B build -S .
 cmake --build build
