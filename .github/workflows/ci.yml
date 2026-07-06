@@ -43,7 +43,7 @@ jobs:
 
     steps:
       # Clone the repo into the runner — always first
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # ── Windows: MSYS2 + MinGW-w64 ──────────────────────────────────────────
       # Sets up a full MinGW-w64 environment inside MSYS2

@@ -33,7 +33,7 @@ jobs:
             msys2: false
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # ── Windows ──────────────────────────────────────────────────────────────
       - name: Setup MSYS2 + MinGW-w64
@@ -98,7 +98,7 @@ jobs:
       contents: write   # Required to create a GitHub Release
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # Download all 3 binaries into dist/ directly (no subdirectories)
       - name: Download all binaries
