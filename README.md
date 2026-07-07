@@ -14,6 +14,28 @@ A POSIX-style shell built from scratch in C++23.
 
 ---
 
+## Quick Install (one command)
+
+### Linux
+```bash
+curl -fsSL https://raw.githubusercontent.com/PRITISH-TOMAR/spin_shell/main/scripts/install-linux.sh | bash
+```
+Downloads the binary, makes it executable, and adds **spin_shell** as a GNOME Terminal profile.
+
+### macOS
+```bash
+curl -fsSL https://raw.githubusercontent.com/PRITISH-TOMAR/spin_shell/main/scripts/install-macos.sh | bash
+```
+Downloads the binary, strips Gatekeeper quarantine, and imports a **spin_shell** profile into Terminal.app.
+
+### Windows (PowerShell)
+```powershell
+irm https://raw.githubusercontent.com/PRITISH-TOMAR/spin_shell/main/scripts/install-windows-terminal.ps1 | iex
+```
+Downloads the binary and adds **spin_shell** as a Windows Terminal profile. Reopen Windows Terminal to see it in the dropdown.
+
+---
+
 ## Download Pre-built Binary
 
 Pre-built binaries are available on the [Releases page](https://github.com/PRITISH-TOMAR/spin_shell/releases/latest).

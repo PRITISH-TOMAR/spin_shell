@@ -18,17 +18,9 @@
 - [ ] Include checksums (`sha256sum`) for each binary in the release notes
 
 ### Phase 3 — Install Script
-- [ ] Write `install.sh` (Linux/macOS):
-  - Detects OS and architecture
-  - Downloads the correct binary from latest GitHub Release
-  - Places it in `/usr/local/bin/myshell`
-  - Appends to `/etc/shells` so it can be set as login shell
-- [ ] Write `install.ps1` (Windows):
-  - Downloads `.exe` from latest GitHub Release
-  - Places it in a sensible location (e.g. `C:\Program Files\myshell\`)
-  - Adds that directory to the user's `PATH`
-- [ ] Document one-liner install in README:
-  - `curl -fsSL https://raw.githubusercontent.com/.../install.sh | sh`
+- [x] Write `install.sh` (Linux/macOS): `scripts/install-linux.sh` + `scripts/install-macos.sh`
+- [x] Write `install.ps1` (Windows): `scripts/install-windows-terminal.ps1`
+- [x] Document one-liner install in README
 
 ### Phase 4 — Package Managers
 - [ ] Submit `winget` manifest (Windows)
