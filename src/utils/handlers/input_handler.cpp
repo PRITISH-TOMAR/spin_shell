@@ -1,42 +1,20 @@
 #include "input_handler.hpp"
-#include <filesystem>
+#include "glob/brace_expander.hpp"
+#include "glob/path_glob.hpp"
 #include <algorithm>
-namespace fs = std::filesystem;
 
-// Returns true if `name` matches shell glob `pat` (* = any sequence, ? = one char).
-static bool matchGlob(const string &pat, const string &name)
+static bool hasGlobChars(const string &s)
 {
-    size_t pi = 0, ni = 0, starPi = string::npos, starNi = 0;
-    while (ni < name.size())
-    {
-        if (pi < pat.size() && (pat[pi] == name[ni] || pat[pi] == '?'))
-        {
-            ++pi;
-            ++ni;
-        }
-        else if (pi < pat.size() && pat[pi] == '*')
-        {
-            starPi = pi++;
-            starNi = ni;
-        }
-        else if (starPi != string::npos)
-        {
-            pi = starPi + 1;
-            ni = ++starNi;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    while (pi < pat.size() && pat[pi] == '*')
-        ++pi;
-    return pi == pat.size();
+    for (char c : s)
+        if (c == '*' || c == '?' || c == '[')
+            return true;
+    return false;
 }
 
-// Expands unquoted glob tokens in parsed.rawArgs in-place.
-// Tokens that had unquoted * ? [ are replaced with sorted filesystem matches.
-// If no matches, the literal token is kept (bash nullglob-off behaviour).
+// Expands unquoted glob/brace tokens in parsed.rawArgs in-place.
+// Pipeline per token: expandBraces → pathGlob (only if pattern has glob chars).
+// Brace-only results (no * ? [) are kept as-is without filesystem check.
+// Glob patterns with no filesystem match keep the literal pattern (nullglob-off).
 static void expandGlobs(ParsedInput &parsed, const string &cwd)
 {
     vector<string> newRawArgs;
@@ -55,31 +33,34 @@ static void expandGlobs(ParsedInput &parsed, const string &cwd)
             continue;
         }
 
-        vector<string> matches;
-        error_code ec;
-        for (auto &entry : fs::directory_iterator(cwd, ec))
-        {
-            string name = entry.path().filename().string();
-            if (!name.empty() && name[0] == '.')
-                continue; // skip hidden files
-            if (matchGlob(token, name))
-                matches.push_back(name);
-        }
-        sort(matches.begin(), matches.end());
+        // Step 1: brace expansion (purely textual)
+        vector<string> braceExpanded = expandBraces(token);
 
-        if (matches.empty())
+        // Step 2: for each brace-expanded pattern, glob-expand if it has wildcards
+        vector<string> finalTokens;
+        for (const string &pattern : braceExpanded)
         {
-            newRawArgs.push_back(token);
-            if (!isFlag)
-                newFiles.push_back(token);
-        }
-        else
-        {
-            for (const string &m : matches)
+            if (hasGlobChars(pattern))
             {
-                newRawArgs.push_back(m);
-                newFiles.push_back(m);
+                vector<string> m = pathGlob(pattern, cwd);
+                if (m.empty())
+                    finalTokens.push_back(pattern); // no match → keep literal pattern
+                else
+                    finalTokens.insert(finalTokens.end(), m.begin(), m.end());
             }
+            else
+            {
+                finalTokens.push_back(pattern); // no wildcards → keep as-is
+            }
+        }
+
+        sort(finalTokens.begin(), finalTokens.end());
+
+        for (const string &t : finalTokens)
+        {
+            newRawArgs.push_back(t);
+            if (!isFlag)
+                newFiles.push_back(t);
         }
     }
 
