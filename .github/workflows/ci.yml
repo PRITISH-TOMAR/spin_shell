@@ -98,8 +98,23 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
           cmake --build build --parallel
 
-      # Upload so the test job (and the Actions run page) can access it
-      - name: Upload binary
+      # ── Tests ────────────────────────────────────────────────────────────────
+      # Runs every tests/*.sh script automatically — no manual registration needed
+      # Split into two steps only because Windows needs `shell: msys2 {0}` for bash
+      - name: Run tests (Windows)
+        if: matrix.msys2
+        shell: msys2 {0}
+        run: for f in tests/*.sh; do bash "$f" ./build/${{ matrix.artifact }}; done
+
+      - name: Run tests (Linux / macOS)
+        if: "!matrix.msys2"
+        run: for f in tests/*.sh; do bash "$f" ./build/${{ matrix.artifact }}; done
+
+      # ── Upload binary ────────────────────────────────────────────────────────
+      # Makes the compiled binary downloadable from the Actions run page
+      # if-no-files-found: error  → fails the job if binary is missing (catches silent build failures)
+      # retention-days: 7         → auto-deleted after a week (not a permanent release artifact)
+      - name: Upload binary artifact
         uses: actions/upload-artifact@v4
         with:
           name: shell-${{ matrix.os }}
