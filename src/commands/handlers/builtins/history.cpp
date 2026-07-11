@@ -1,5 +1,6 @@
 #include "history.hpp"
 #include "src/utils/handlers/flag_set.hpp"
+#include "src/utils/color/color.hpp"
 #include <iostream>
 #include <stdexcept>
 
@@ -54,7 +55,7 @@ int handleHistory(const ParsedInput& parsed, ShellState& state)
     }
 
     for (size_t i = start; i < hist.size(); ++i)
-        cout << "  " << (i + 1) << "  " << hist[i] << "\n";
+        cout << Color::historyLineNum(i + 1) << hist[i] << "\n";
 
     return 0;
 }
