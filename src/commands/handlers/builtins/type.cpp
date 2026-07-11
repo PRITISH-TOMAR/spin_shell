@@ -1,6 +1,7 @@
 #include "type.hpp"
 #include "src/commands/commands.hpp"
 #include "src/utils/findInPath.hpp"
+#include "src/utils/color/color.hpp"
 #include <iostream>
 
 int handleType(const ParsedInput& parsed, ShellState& state) {
@@ -12,13 +13,13 @@ int handleType(const ParsedInput& parsed, ShellState& state) {
     int exitCode = 0;
     for (const string& name : parsed.files) {
         if (commandMap.count(name)) {
-            cout << name << " is a shell builtin\n";
+            cout << Color::typeResult(name, "builtin") << "\n";
         } else {
             string path = findInPath(name);
             if (!path.empty()) {
-                cout << name << " is " << path << "\n";
+                cout << Color::typeResult(name, path) << "\n";
             } else {
-                cerr << name << ": not found\n";
+                cerr << Color::typeResult(name, "") << "\n";
                 exitCode = 1;
             }
         }

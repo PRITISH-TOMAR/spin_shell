@@ -2,6 +2,7 @@
 #include "src/utils/parser/parser.hpp"
 #include "src/utils/shell_state/shell_state.hpp"
 #include "src/utils/path/path.hpp"
+#include "src/utils/color/color.hpp"
 #include <fstream>
 #include <iostream>
 #include <filesystem>
@@ -26,8 +27,7 @@ static bool printFileContent(const fs::path &path, bool showLineNumbers)
     {
         if (showLineNumbers)
         {
-            cout.width(6);
-            cout << right << lineNumber++ << "  " << line << "\n";
+            cout << Color::catLineNum(lineNumber++) << "  " << line << "\n";
         }
         else
         {

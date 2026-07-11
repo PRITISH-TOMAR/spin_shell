@@ -1,5 +1,6 @@
 #include "ls.hpp"
 #include "src/utils/path/path.hpp"
+#include "src/utils/color/color.hpp"
 
 #include <iostream>
 #include <filesystem>
@@ -85,6 +86,7 @@ static void printEntry(const fs::directory_entry &entry, const LsOptions &opts)
     fs::file_status status = entry.status();
     string name = entry.path().filename().string();
     bool isDir = fs::is_directory(status);
+    string displayName = Color::lsColorName(entry, status);
 
     if (opts.longFormat)
     {
@@ -97,10 +99,10 @@ static void printEntry(const fs::directory_entry &entry, const LsOptions &opts)
         char timeBuf[20];
         strftime(timeBuf, sizeof(timeBuf), "%b %d %H:%M", localtime(&t));
 
-        cout << formatPermissions(status)
-             << "  " << setw(8) << right << sizeStr
-             << "  " << timeBuf
-             << "  " << name;
+        cout << Color::dim(formatPermissions(status))
+             << "  " << setw(8) << right << Color::green(sizeStr)
+             << "  " << Color::yellow(timeBuf)
+             << "  " << displayName;
         if (isDir)
             cout << "/";
         cout << "\n";
@@ -108,7 +110,7 @@ static void printEntry(const fs::directory_entry &entry, const LsOptions &opts)
     else if (opts.onePerLine)
     {
         // -1: each entry on its own line, no padding
-        cout << name;
+        cout << displayName;
         if (isDir)
             cout << "/";
         cout << "\n";
@@ -116,7 +118,7 @@ static void printEntry(const fs::directory_entry &entry, const LsOptions &opts)
     else
     {
         // Default short mode: entries separated by two spaces
-        cout << name;
+        cout << displayName;
         if (isDir)
             cout << "/";
         cout << "  ";

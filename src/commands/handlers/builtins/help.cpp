@@ -1,6 +1,6 @@
 #include "help.hpp"
+#include "src/utils/color/color.hpp"
 #include <iostream>
-#include <iomanip>
 
 using namespace std;
 
@@ -27,9 +27,12 @@ int handleHelp(const ParsedInput& parsed, ShellState& state) {
         {"type",    "Describe how a command would be interpreted"},
     };
 
-    cout << "Shell built-in commands:\n\n";
-    for (const auto& cmd : cmds)
-        cout << "  " << left << setw(12) << cmd.name << cmd.desc << "\n";
+    cout << Color::helpHeader("Shell built-in commands:") << "\n\n";
+    for (const auto& cmd : cmds) {
+        // Pad the plain name to 12 chars before colorizing so alignment is preserved
+        string padded = string(cmd.name) + string(12 - string(cmd.name).size(), ' ');
+        cout << "  " << Color::helpCommand(padded) << Color::helpDesc(cmd.desc) << "\n";
+    }
 
     return state.recordCommandExitCode(0);
 }

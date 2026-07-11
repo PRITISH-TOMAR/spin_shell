@@ -1,6 +1,7 @@
 #include "grep.hpp"
 #include "src/utils/path/path.hpp"
 #include "src/utils/handlers/flag_set.hpp"
+#include "src/utils/color/color.hpp"
 #include <iostream>
 #include <fstream>
 #include <regex>
@@ -50,9 +51,9 @@ static bool grepStream(istream& in, const regex& re, const string& label,
                 return true;
             }
             if (!opts.countOnly) {
-                if (printLabel)      cout << label << ":";
-                if (opts.lineNumber) cout << lineNum << ":";
-                cout << line << "\n";
+                if (printLabel)      cout << Color::magenta(label) << ":";
+                if (opts.lineNumber) cout << Color::green(to_string(lineNum)) << ":";
+                cout << Color::grepHighlight(line, re) << "\n";
             }
         }
     }
