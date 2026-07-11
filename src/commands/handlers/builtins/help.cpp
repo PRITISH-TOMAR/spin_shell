@@ -30,7 +30,7 @@ int handleHelp(const ParsedInput& parsed, ShellState& state) {
     cout << Color::helpHeader("Shell built-in commands:") << "\n\n";
     for (const auto& cmd : cmds) {
         // Pad the plain name to 12 chars before colorizing so alignment is preserved
-        string padded = string(cmd.name) + string(12 - strlen(cmd.name), ' ');
+        string padded = string(cmd.name) + string(12 - string(cmd.name).size(), ' ');
         cout << "  " << Color::helpCommand(padded) << Color::helpDesc(cmd.desc) << "\n";
     }
 
