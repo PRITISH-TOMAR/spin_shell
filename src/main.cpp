@@ -10,12 +10,24 @@
 #include "utils/pipe/pipe_runner.hpp"
 #include "utils/redirections/redirection_guard.hpp"
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 using namespace std;
 
 int main()
 {
     cout << unitbuf;
     cerr << unitbuf;
+
+// Enable ANSI escape codes on Windows
+#ifdef _WIN32
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD mode = 0;
+    if (GetConsoleMode(hOut, &mode))
+        SetConsoleMode(hOut, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+#endif
 
     ShellState state;
     string input;
