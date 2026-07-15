@@ -1,16 +1,36 @@
 # spin_shell
 
-A POSIX-style shell built from scratch in C++23.
+A POSIX-style shell written from the ground up in C++23 — currently in active early development, with a phased roadmap toward full scripting, job control, and interactive UX.
+
+## Table of Contents
+
+- [Features](#features)
+- [Download Pre-built Binary](#download-pre-built-binary)
+- [Installation (Build from Source)](#installation-build-from-source)
+- [Project Structure](#project-structure)
+- [Development](#development)
+- [Roadmap](#roadmap--toward-a-full-posix-compliant-shell)
+- [Contributing](#contributing)
+
+---
 
 ## Features
 
-- Built-in commands: `cd`, `pwd`, `exit`, `echo`, `cat`, `ls`, `grep`, `mkdir`, `rm`, `cp`, `mv`, `touch`, `clear`, `history`, `help`
-- External command execution via `$PATH`
-- IO redirection: `>`, `>>`, `<`, `2>`, `2>&1`
-- Pipes: `cmd1 | cmd2 | ...`
-- Variable expansion: `$VAR`, `$?`
-- Glob expansion: `*`, `?`
-- Shell variable assignment: `VAR=value`
+**Phase 1 (current):**
+
+| Category | Support |
+|---|---|
+| Built-in commands | `cd`, `pwd`, `exit`, `echo`, `cat`, `ls`, `grep`, `mkdir`, `rm`, `cp`, `mv`, `touch`, `clear`, `history`, `help` |
+| External execution | Runs any executable resolvable via `$PATH` |
+| IO redirection | `>`, `>>`, `<`, `2>`, `2>&1` |
+| Pipes | `cmd1 \| cmd2 \| ...` |
+| Variable expansion | `$VAR`, `$?` |
+| Glob expansion | `*`, `?` |
+| Variable assignment | `VAR=value` |
+
+The binary is called **`spin_shell`** everywhere in this doc and in every install step below. Keep that name consistent in your own setup too — so `which spin_shell` always means something.
+
+> Looking for what's next? See the [Roadmap](#roadmap--toward-a-full-posix-compliant-shell) for Phase 2 and Phase 3.
 
 ---
 
@@ -20,115 +40,119 @@ Pre-built binaries are available on the [Releases page](https://github.com/PRITI
 
 | Platform | File |
 |---|---|
-| Windows (x64) | `shell-windows-x64.exe` |
-| Linux (x64) | `shell-linux-x64` |
-| macOS (Apple Silicon) | `shell-macos-arm64` |
+| Windows (x64) | `spin_shell-windows-x64.exe` |
+| Linux (x64) | `spin_shell-linux-x64` |
+| macOS (Apple Silicon) | `spin_shell-macos-arm64` |
 
-A `checksums.txt` (SHA-256) is included with every release to verify integrity.
+Every release ships with a `checksums.txt` (SHA-256). Verify it before running anything you've downloaded from the internet.
 
-### Windows
+<details>
+<summary><strong>Windows</strong></summary>
 
 ```powershell
-# 1. Download shell-windows-x64.exe from the Releases page
+# 1. Download spin_shell-windows-x64.exe from the Releases page
 
-# 2. (Optional) Verify checksum — open PowerShell in the download folder
-Get-FileHash shell-windows-x64.exe -Algorithm SHA256
+# 2. Verify checksum (do this — it's an unsigned binary)
+Get-FileHash spin_shell-windows-x64.exe -Algorithm SHA256
+# Compare the output against the matching line in checksums.txt
 
 # 3a. Run directly
-.\shell-windows-x64.exe
+.\spin_shell-windows-x64.exe
 
-# 3b. Or install system-wide: copy to a folder that is on your PATH
-#     Example using the user's local bin (no admin needed):
+# 3b. Or install for your user (no admin needed):
 mkdir "$env:USERPROFILE\bin" -Force
-copy shell-windows-x64.exe "$env:USERPROFILE\bin\shell.exe"
-# Then add %USERPROFILE%\bin to your PATH via System Properties → Environment Variables
+copy spin_shell-windows-x64.exe "$env:USERPROFILE\bin\spin_shell.exe"
+# Then add %USERPROFILE%\bin to PATH via System Properties → Environment Variables
 ```
 
-### Add to Windows Terminal
+**Add to Windows Terminal:**
 
-Run in **PowerShell**:
+Windows Terminal auto-detects `spin_shell.exe` once it's on your PATH, the next time it enumerates profiles. To add it manually instead:
 
-```powershell
-iwr https://github.com/PRITISH-TOMAR/spin_shell/releases/latest/download/shell-windows-x64.exe -OutFile "$env:USERPROFILE\shell.exe"
-$f = "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json"
-$c = Get-Content $f -Raw | ConvertFrom-Json
-$c.profiles.list += [pscustomobject]@{ name="spin_shell"; guid="{a8f1c2d3-4e5b-6f7a-8b9c-0d1e2f3a4b5c}"; commandline="$env:USERPROFILE\shell.exe"; startingDirectory="%USERPROFILE%" }
-$c | ConvertTo-Json -Depth 10 | Set-Content $f
-```
+1. Open Windows Terminal → Settings → **Add a new profile** → New empty profile
+2. Set **Command line** to the full path of `spin_shell.exe`
+3. Set **Name** to `spin_shell`
+4. Save
 
-Reopen Windows Terminal — **spin_shell** appears in the dropdown.
+</details>
 
----
-
-### Linux
+<details>
+<summary><strong>Linux</strong></summary>
 
 ```bash
 # 1. Download
-curl -Lo shell https://github.com/PRITISH-TOMAR/spin_shell/releases/latest/download/shell-linux-x64
+curl -Lo spin_shell https://github.com/PRITISH-TOMAR/spin_shell/releases/latest/download/spin_shell-linux-x64
 
-# 2. (Optional) Verify checksum
+# 2. Verify checksum
 curl -Lo checksums.txt https://github.com/PRITISH-TOMAR/spin_shell/releases/latest/download/checksums.txt
 sha256sum -c checksums.txt --ignore-missing
 
 # 3. Make executable and install
-chmod +x shell
-sudo mv shell /usr/local/bin/shell
+chmod +x spin_shell
+sudo mv spin_shell /usr/local/bin/spin_shell
 ```
 
-### macOS
+</details>
+
+<details>
+<summary><strong>macOS</strong></summary>
 
 ```bash
 # 1. Download
-curl -Lo shell https://github.com/PRITISH-TOMAR/spin_shell/releases/latest/download/shell-macos-arm64
+curl -Lo spin_shell https://github.com/PRITISH-TOMAR/spin_shell/releases/latest/download/spin_shell-macos-arm64
 
-# 2. (Optional) Verify checksum
+# 2. Verify checksum
 curl -Lo checksums.txt https://github.com/PRITISH-TOMAR/spin_shell/releases/latest/download/checksums.txt
 shasum -a 256 -c checksums.txt --ignore-missing
 
 # 3. Make executable and install
-chmod +x shell
-sudo mv shell /usr/local/bin/shell
+chmod +x spin_shell
+sudo mv spin_shell /usr/local/bin/spin_shell
 
-# 4. If macOS Gatekeeper blocks it (unsigned binary):
-xattr -d com.apple.quarantine /usr/local/bin/shell
+# 4. If macOS Gatekeeper blocks it (unsigned binary), and you've verified
+#    the checksum above and trust the source, clear the quarantine flag:
+xattr -d com.apple.quarantine /usr/local/bin/spin_shell
 ```
+
+</details>
 
 ---
 
 ## Installation (Build from Source)
 
-### Prerequisites
+Building from source sidesteps the unsigned-binary trust question entirely — recommended if you're unsure about the pre-built download, or want the latest unreleased changes.
+
+**Prerequisites**
 
 | Tool | Version |
 |---|---|
 | CMake | 3.20+ |
-| MinGW-w64 (Windows) or GCC (Linux/macOS) | C++23-capable |
+| MinGW-w64 (Windows) or GCC/Clang (Linux/macOS) | C++23-capable |
 | Git | any |
 
-### Windows (MinGW)
+<details>
+<summary><strong>Windows (MinGW)</strong></summary>
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/PRITISH-TOMAR/spin_shell.git
 cd spin_shell
 
-# 2. Configure
 cmake -G "MinGW Makefiles" -B build -S .
-
-# 3. Build
 cmake --build build
 
-# 4. Run
-./build/shell
+./build/spin_shell
 ```
 
-Or use the convenience script (cleans build/ each time):
+Or use the convenience script (cleans `build/` each time):
 
 ```bash
 bash run.sh
 ```
 
-### Linux / macOS (GCC/Clang)
+</details>
+
+<details>
+<summary><strong>Linux / macOS (GCC/Clang)</strong></summary>
 
 ```bash
 git clone https://github.com/PRITISH-TOMAR/spin_shell.git
@@ -137,42 +161,21 @@ cd spin_shell
 cmake -B build -S .
 cmake --build build
 
-./build/shell
+./build/spin_shell
 ```
 
-> On macOS you may need to install CMake via `brew install cmake` and ensure Xcode CLT is present (`xcode-select --install`).
+> On macOS you may need `brew install cmake` and Xcode CLT (`xcode-select --install`).
 
-### Optional: add to PATH
+</details>
 
-To use `shell` from anywhere:
+**Optional: add to PATH**
 
 ```bash
 # Linux / macOS
-sudo cp build/shell /usr/local/bin/myshell
+sudo cp build/spin_shell /usr/local/bin/spin_shell
 
 # Windows — add build/ to your system PATH, or copy the binary:
-copy build\shell.exe C:\Windows\System32\myshell.exe
-```
-
----
-
-## Project Structure
-
-```
-src/
-  main.cpp                        # REPL loop
-  commands/
-    commands.hpp/.cpp             # Command enum + maps
-    dispatch.cpp                  # Central switch dispatcher
-    handlers/
-      builtins/                   # cd, pwd, exit, help, history
-      tools/                      # cat, echo, ls, grep, mkdir, ...
-  utils/
-    parser/                       # parseInput()
-    shell_state/                  # ShellState struct
-    path/                         # resolvePath()
-    redirections/                 # Redirection types + RedirGuard
-    executors/                    # executeExternalCommand()
+copy build\spin_shell.exe C:\Windows\System32\spin_shell.exe
 ```
 
 ---
@@ -180,11 +183,76 @@ src/
 ## Development
 
 ```bash
-# Build and run in one step
 bash run.sh
-
-# Run tests (once CI is set up)
-# See .github/workflows/build.yml
 ```
 
-See [ROADMAP.md](ROADMAP.md) for planned features and next steps.
+---
+
+## Roadmap — Toward a Full POSIX-Compliant Shell
+
+spin_shell is being built out into a complete, scriptable command-line environment — covering control flow, expansion, interactive editing, job control, and scripting semantics found in mature shells like bash and zsh.
+
+### Phase 2 — Core Shell Language
+
+The foundational language layer: how commands chain together, how strings and variables are interpreted, and how the environment is managed. Every later feature (scripting, job control, advanced redirection) builds on this.
+
+**Control Flow & Execution Chaining**
+- [ ] `;` — sequential command execution
+- [ ] `&&` — conditional execution on success
+- [ ] `||` — conditional execution on failure
+- [ ] `&` — asynchronous background execution
+
+**Quoting, Escaping & Literal Handling**
+- [ ] Single-quote literal strings (no expansion)
+- [ ] Double-quote strings with embedded `$VAR` expansion
+- [ ] Backslash escaping for special characters
+
+**Expansion Engine**
+- [ ] `${VAR}` — braced variable expansion
+- [ ] `${VAR:-default}` — parameter expansion with defaults
+- [ ] `$(cmd)` — command substitution
+- [ ] `$((expr))` — arithmetic expansion
+
+**Environment Management & Aliasing**
+- [ ] `unset` — variable removal
+- [ ] `env` — environment inspection
+- [ ] `alias` / `unalias` — command aliasing system
+
+### Phase 3 — Interactive & Scripting Capabilities
+
+Builds on the Phase 2 language layer to deliver a real interactive experience and a full scripting runtime — the point where spin_shell stops being a command interpreter and becomes a shell people script and live in.
+
+**Interactive Shell Experience (Readline-class UX)**
+- [ ] Full history navigation via arrow keys
+- [ ] Tab completion for commands and filesystem paths
+- [ ] `Ctrl+R` incremental reverse history search
+- [ ] Advanced line editing — home/end, word-jump navigation
+
+**Scripting Language Support**
+- [ ] `if / elif / else / fi` conditionals
+- [ ] `for / while / until` loop constructs
+- [ ] `case` pattern-matching statements
+- [ ] User-defined `function`s
+- [ ] `source` / `.` — script execution in current shell context
+- [ ] `return` with exit-code propagation
+
+**Process & Job Control**
+- [ ] `jobs` — background job listing
+- [ ] `fg` / `bg` — job state management
+- [ ] Signal handling for `SIGINT` / `SIGTSTP` (`Ctrl+C` / `Ctrl+Z`)
+
+**Advanced Shell Semantics**
+- [ ] Here-documents (`<<EOF ... EOF`)
+- [ ] Here-strings (`<<< "text"`)
+- [ ] Process substitution (`<(cmd)`, `>(cmd)`)
+- [ ] Subshells with isolated execution environments
+- [ ] `exec` — process image replacement
+- [ ] `trap` — signal handling in scripts
+
+Each phase builds on the last, moving spin_shell from a functional command interpreter toward a shell capable of running real-world scripts, interactive workflows, and job-managed sessions end to end.
+
+---
+
+## Contributing
+
+Issues and pull requests are welcome. If you're picking up an item from the roadmap, opening an issue first to flag what you're working on helps avoid duplicate effort.
