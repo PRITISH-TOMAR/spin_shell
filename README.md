@@ -40,7 +40,7 @@ Pre-built binaries are available on the [Releases page](https://github.com/PRITI
 
 | Platform | File |
 |---|---|
-| Windows (x64) | `spin_shell-windows-x64.exe` |
+| Windows (x64) | `shell-windows-x64.exe` |
 | Linux (x64) | `spin_shell-linux-x64` |
 | macOS (Apple Silicon) | `spin_shell-macos-arm64` |
 
@@ -50,24 +50,47 @@ Every release ships with a `checksums.txt` (SHA-256). Verify it before running a
 <summary><strong>Windows</strong></summary>
 
 ```powershell
-# 1. Download spin_shell-windows-x64.exe from the Releases page
+# 1. Download
+Invoke-WebRequest https://github.com/PRITISH-TOMAR/spin_shell/releases/latest/download/shell-windows-x64.exe -OutFile shell-windows-x64.exe
 
 # 2. Verify checksum (do this — it's an unsigned binary)
-Get-FileHash spin_shell-windows-x64.exe -Algorithm SHA256
+Invoke-WebRequest https://github.com/PRITISH-TOMAR/spin_shell/releases/latest/download/checksums.txt -OutFile checksums.txt
+Get-FileHash shell-windows-x64.exe -Algorithm SHA256
 # Compare the output against the matching line in checksums.txt
 
 # 3a. Run directly
-.\spin_shell-windows-x64.exe
+.\shell-windows-x64.exe
 
 # 3b. Or install for your user (no admin needed):
 mkdir "$env:USERPROFILE\bin" -Force
-copy spin_shell-windows-x64.exe "$env:USERPROFILE\bin\spin_shell.exe"
+copy shell-windows-x64.exe "$env:USERPROFILE\bin\spin_shell.exe"
 # Then add %USERPROFILE%\bin to PATH via System Properties → Environment Variables
 ```
 
 **Add to Windows Terminal:**
 
-Windows Terminal auto-detects `spin_shell.exe` once it's on your PATH, the next time it enumerates profiles. To add it manually instead:
+Windows Terminal auto-detects `spin_shell.exe` once it's on your PATH, the next time it enumerates profiles. To register it as a named profile and optionally set it as your default shell, run this script — it generates a fresh GUID at runtime so nothing is hardcoded:
+
+```powershell
+$settingsPath = @(
+    "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json",
+    "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe\LocalState\settings.json"
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+$settings  = Get-Content $settingsPath -Raw | ConvertFrom-Json
+$binary    = (Get-Command spin_shell.exe -ErrorAction SilentlyContinue)?.Source ?? "$env:USERPROFILE\bin\spin_shell.exe"
+$existing  = $settings.profiles.list | Where-Object { $_.name -eq "spin_shell" }
+
+if (-not $existing) {
+    $guid = "{$([System.Guid]::NewGuid())}"
+    $settings.profiles.list += [pscustomobject]@{ guid = $guid; name = "spin_shell"; commandline = $binary; hidden = $false }
+    if ((Read-Host "Set as default? [y/N]") -match '^[Yy]$') { $settings.defaultProfile = $guid }
+}
+
+$settings | ConvertTo-Json -Depth 10 | Set-Content $settingsPath -Encoding UTF8
+```
+
+To add it manually instead:
 
 1. Open Windows Terminal → Settings → **Add a new profile** → New empty profile
 2. Set **Command line** to the full path of `spin_shell.exe`
