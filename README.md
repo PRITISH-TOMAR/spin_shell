@@ -8,6 +8,7 @@ A POSIX-style shell written from the ground up in C++23 — currently in active 
 - [Download Pre-built Binary](#download-pre-built-binary)
 - [Installation (Build from Source)](#installation-build-from-source)
 - [Project Structure](#project-structure)
+- [Uninstall](#uninstall)
 - [Development](#development)
 - [Roadmap](#roadmap--toward-a-full-posix-compliant-shell)
 - [Contributing](#contributing)
@@ -74,11 +75,13 @@ Windows Terminal auto-detects `spin_shell.exe` once it's on your PATH, the next 
 ```powershell
 $settingsPath = @(
     "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json",
-    "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe\LocalState\settings.json"
+    "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe\LocalState\settings.json",
+    "$env:LOCALAPPDATA\Microsoft\Windows Terminal\settings.json"
 ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 
 $settings  = Get-Content $settingsPath -Raw | ConvertFrom-Json
-$binary    = (Get-Command spin_shell.exe -ErrorAction SilentlyContinue)?.Source ?? "$env:USERPROFILE\bin\spin_shell.exe"
+$cmd       = Get-Command spin_shell.exe -ErrorAction SilentlyContinue
+$binary    = if ($cmd) { $cmd.Source } else { "$env:USERPROFILE\bin\spin_shell.exe" }
 $existing  = $settings.profiles.list | Where-Object { $_.name -eq "spin_shell" }
 
 if (-not $existing) {
@@ -200,6 +203,53 @@ sudo cp build/spin_shell /usr/local/bin/spin_shell
 # Windows — add build/ to your system PATH, or copy the binary:
 copy build\spin_shell.exe C:\Windows\System32\spin_shell.exe
 ```
+
+---
+
+## Uninstall
+
+<details>
+<summary><strong>Windows</strong></summary>
+
+**1. Remove the binary**
+
+Delete whichever file(s) you placed on your system:
+
+```powershell
+Remove-Item "$env:USERPROFILE\bin\spin_shell.exe" -Force -ErrorAction SilentlyContinue
+Remove-Item "$env:USERPROFILE\shell.exe"          -Force -ErrorAction SilentlyContinue
+# If you copied to System32:
+Remove-Item "C:\Windows\System32\spin_shell.exe"  -Force -ErrorAction SilentlyContinue
+```
+
+**2. Remove the Windows Terminal profile**
+
+```powershell
+$settingsPath = @(
+    "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json",
+    "$env:LOCALAPPDATA\Packages\Microsoft.WindowsTerminalPreview_8wekyb3d8bbwe\LocalState\settings.json",
+    "$env:LOCALAPPDATA\Microsoft\Windows Terminal\settings.json"
+) | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+$settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
+$settings.profiles.list = @($settings.profiles.list | Where-Object { $_.name -ne "spin_shell" })
+$settings | ConvertTo-Json -Depth 10 | Set-Content $settingsPath -Encoding UTF8
+```
+
+**3. Remove from PATH (if you added `%USERPROFILE%\bin`)**
+
+Open **System Properties → Environment Variables**, find `%USERPROFILE%\bin` in the user `Path` variable, and delete that entry.
+
+</details>
+
+<details>
+<summary><strong>Linux / macOS</strong></summary>
+
+```bash
+sudo rm /usr/local/bin/spin_shell
+```
+
+</details>
 
 ---
 
